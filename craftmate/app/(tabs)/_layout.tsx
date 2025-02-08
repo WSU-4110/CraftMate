@@ -19,6 +19,7 @@ export default function TabLayout() {
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
         tabBarShowLabel: false, // Hide the titles
+        tabBarItemStyle: { paddingVertical: 10 }, // Adjust the padding to lower the icons
         tabBarStyle: Platform.select({
           ios: {
             // Use a transparent background on iOS to show the blur effect
