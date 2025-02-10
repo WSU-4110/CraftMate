@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 import { Link } from "expo-router"; 
-import { auth } from "../constants/firebaseConfig"; 
+import { auth, db } from "../constants/firebaseConfig"; 
 import { useColorScheme } from 'react-native';
 import { Colors } from '../constants/Colors';
 import styles from "./SignUpScreen.styles";
@@ -20,8 +21,18 @@ export default function SignUpScreen(){
     }
 
     try {
+      // Step 1: Create user in Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+
+      // Step 2: Create a user document in Firestore
+      const userRef = doc(db, 'users', user.uid); // Use UID as the document ID
+      await setDoc(userRef, {
+        email: user.email,
+        uid: user.uid,
+        createdAt: new Date().toISOString(),
+      });
+
       Alert.alert("Success", `Welcome, ${user.email}!`);
     } catch (error: any) {
       Alert.alert("Sign Up Failed", error.message);
