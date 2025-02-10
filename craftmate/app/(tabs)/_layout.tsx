@@ -16,27 +16,20 @@ export default function TabLayout() {
     <>
       <Tabs
         screenOptions={{
-          tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+          tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tabIconSelected,
+          tabBarInactiveTintColor: Colors[colorScheme ?? 'light'].tabIconDefault,
           headerShown: false,
           tabBarButton: HapticTab,
           tabBarBackground: TabBarBackground,
           tabBarShowLabel: false, // Hide the titles
           tabBarItemStyle: { paddingVertical: 10 }, // Adjust the padding to lower the icons
-          tabBarStyle: Platform.select({
-            ios: {
-              position: 'absolute',
-              backgroundColor: '#ffce1b', // Set tab bar background color
-            },
-            default: {
-              backgroundColor: '#ffce1b', // Set tab bar background color
-            },
-          }),
+          tabBarStyle: { backgroundColor: '#ffce1b' }, // Fixed background color
         }}
       >
         <Tabs.Screen
           name="explore"
           options={{
-            tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+            tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.circle" color={color} />,
           }}
         />
         <Tabs.Screen
