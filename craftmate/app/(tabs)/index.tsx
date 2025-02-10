@@ -4,6 +4,7 @@ import { useColorScheme } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import { collection, addDoc, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../../constants/firebaseConfig';
+import { getAuth } from 'firebase/auth';
 
 interface Post {
   id: string;
@@ -45,14 +46,22 @@ const App = () => {
   }, []);
 
   const handleAddPost = async () => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (!user) {
+      alert('You must be logged in to post.');
+      return;
+    }
+
     if (newPostContent.trim()) {
       await addDoc(collection(db, 'posts'), {
-        userId: 'currentUserId', // Replace with the actual current user ID
+        userId: user.uid, // Use the actual current user ID
         content: newPostContent,
         timestamp: new Date().toISOString(),
         likes: 0,
         comments: [],
-        profileImage: 'https://via.placeholder.com/50', // Placeholder image URL
+        profileImage: user.photoURL || 'https://via.placeholder.com/50', // Use user's profile image or a placeholder
       });
       setNewPostContent('');
     }
@@ -93,7 +102,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', // Center the logo horizontally
   },
   logo: {
-    width: 260, // Adjust the width as needed
+    width: 200, // Adjust the width as needed
     height: 100, // Adjust the height as needed
     paddingTop: 50, // Add some space below the logo
     marginBottom: 20, // Add some space below the logo
