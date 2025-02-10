@@ -23,7 +23,7 @@ export default function TabLayout() {
           tabBarBackground: TabBarBackground,
           tabBarShowLabel: false, // Hide the titles
           tabBarItemStyle: { paddingVertical: 10 }, // Adjust the padding to lower the icons
-          tabBarStyle: { backgroundColor: '#ffce1b' }, // Fixed background color
+          tabBarStyle: { backgroundColor: '#E89600' }, // Fixed background color
         }}
       >
         <Tabs.Screen
