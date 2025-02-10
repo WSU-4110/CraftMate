@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Dimensions, TextInput, Button } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { Colors } from '../../constants/Colors';
-import { collection, addDoc, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../constants/firebaseConfig';
 import { getAuth } from 'firebase/auth';
 
 interface Post {
   id: string;
-  userId: string;
+  username: string;
   content: string;
   timestamp: string;
   likes: number;
@@ -16,11 +16,11 @@ interface Post {
   profileImage: any; // You can replace 'any' with the appropriate type if known
 }
 
-const PostItem: React.FC<Post> = ({ userId, content, timestamp, likes, comments, profileImage, theme }) => (
+const PostItem: React.FC<Post> = ({ username, content, timestamp, likes, comments, profileImage, theme }) => (
   <View style={[styles.postContainer, { backgroundColor: Colors[theme].postBackground, shadowColor: Colors[theme].shadowColor }]}>
-    <Image source={profileImage} style={styles.profileImage} />
+    <Image source={{ uri: profileImage }} style={styles.profileImage} />
     <View style={styles.postContentContainer}>
-      <Text style={[styles.postTitle, { color: Colors[theme].text }]}>{userId}</Text>
+      <Text style={[styles.postTitle, { color: Colors[theme].text }]}>{username}</Text>
       <Text style={[styles.postContent, { color: Colors[theme].postText }]}>{content}</Text>
       <Text style={[styles.postTimestamp, { color: Colors[theme].postText }]}>{new Date(timestamp).toLocaleString()}</Text>
     </View>
@@ -54,14 +54,26 @@ const App = () => {
       return;
     }
 
+    const userDocRef = doc(db, 'users', user.uid);
+    const userDoc = await getDoc(userDocRef);
+
+    if (!userDoc.exists()) {
+      alert('User document does not exist.');
+      return;
+    }
+
+    const userData = userDoc.data();
+    const username = userData?.username || 'Anonymous';
+
     if (newPostContent.trim()) {
       await addDoc(collection(db, 'posts'), {
-        userId: user.uid, // Use the actual current user ID
+        username, // Use the username from the Firestore user document
         content: newPostContent,
         timestamp: new Date().toISOString(),
         likes: 0,
         comments: [],
         profileImage: user.photoURL || 'https://via.placeholder.com/50', // Use user's profile image or a placeholder
+        userId: user.uid, // Store the user ID to link the post to the user
       });
       setNewPostContent('');
     }
