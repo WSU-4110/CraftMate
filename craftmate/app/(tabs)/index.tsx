@@ -16,6 +16,37 @@ const posts = [
     content: 'This is the content of the second post.',
     profileImage: 'https://via.placeholder.com/50', // Placeholder image URL
   },
+  {
+    id: '3',
+    title: 'Third Post',
+    content: 'This is the content of the second post.',
+    profileImage: 'https://via.placeholder.com/50', // Placeholder image URL
+  },
+  {
+    id: '4',
+    title: 'Fourth Post',
+    content: 'This is the content of the second post.',
+    profileImage: 'https://via.placeholder.com/50', // Placeholder image URL
+  },
+  {
+    id: '5',
+    title: 'Fifth Post',
+    content: 'This is the content of the second post.',
+    profileImage: 'https://via.placeholder.com/50', // Placeholder image URL
+  },
+  {
+    id: '6',
+    title: 'Sixth Post',
+    content: 'This is the content of the second post.',
+    profileImage: 'https://via.placeholder.com/50', // Placeholder image URL
+  },
+  {
+    id: '7',
+    title: 'Seventh Post',
+    content: 'This is the content of the second post.',
+    profileImage: 'https://via.placeholder.com/50', // Placeholder image URL
+  },
+  // Add more posts as needed
 ];
 
 interface PostItemProps {
@@ -27,11 +58,11 @@ interface PostItemProps {
 
 const PostItem: React.FC<PostItemProps> = ({ title, content, profileImage, theme }) => (
   <View style={[styles.postContainer, { backgroundColor: Colors[theme].postBackground, shadowColor: Colors[theme].shadowColor }]}>
+    <Image source={profileImage} style={styles.profileImage} />
     <View style={styles.postContentContainer}>
       <Text style={[styles.postTitle, { color: Colors[theme].text }]}>{title}</Text>
       <Text style={[styles.postContent, { color: Colors[theme].postText }]}>{content}</Text>
     </View>
-    <Image source={profileImage} style={styles.profileImage} />
   </View>
 );
 
@@ -87,7 +118,7 @@ const styles = StyleSheet.create({
   profileImage: {
     width: 50, // Adjust the width as needed
     height: 50, // Adjust the height as needed
-    borderRadius: 5, // Make the image circular
+    borderRadius: 25, // Make the image circular
     marginRight: 15, // Add some space between the image and the content
   },
   postContentContainer: {
