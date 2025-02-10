@@ -95,7 +95,7 @@ export default function LoginScreen() {
                 onChangeText={setPassword}
                 secureTextEntry
             />
-            <TouchableOpacity style={[styles.button, { backgroundColor: Colors[theme].tint }]} onPress={handleLogin}>
+            <TouchableOpacity style={ styles.button } onPress={handleLogin}>
                 <Text style={[styles.buttonText, { color: Colors[theme].background }]}>Log In</Text>
             </TouchableOpacity>
             <View style={styles.footer}>
