@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Button, Alert } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../constants/firebaseConfig"; // Adjust path if needed
+import { Link } from "expo-router"; 
+import { auth } from "../constants/firebaseConfig"; 
 import styles from "./SignUpScreen.styles";
 
 export default function SignUpScreen(){
@@ -18,7 +19,7 @@ export default function SignUpScreen(){
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      Alert.alert("Account Created", `Welcome, ${user.email}!`);
+      Alert.alert("Success", `Welcome, ${user.email}!`);
     } catch (error: any) {
       Alert.alert("Sign Up Failed", error.message);
     }
@@ -26,7 +27,7 @@ export default function SignUpScreen(){
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Sign Up</Text>
+      <Text style={styles.title}>Create an Account</Text>
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -49,8 +50,19 @@ export default function SignUpScreen(){
         onChangeText={setConfirmPassword}
         secureTextEntry
       />
-      <Button title="Sign Up" onPress={handleSignUp} />
+      <TouchableOpacity style={styles.button} onPress={handleSignUp}>
+        <Text style={styles.buttonText}>Sign Up</Text>
+      </TouchableOpacity>
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>
+          Already have an account?{" "}
+          <Link href="../login" style={styles.footerLink}>
+            Log In
+          </Link>
+        </Text>
+      </View>
     </View>
   );
 };
+
 

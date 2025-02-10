@@ -5,35 +5,47 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     justifyContent: "center",
-    backgroundColor: "#f5f5f5", // Optional: Change the background color
+    backgroundColor: "#f5f5f5", // Light background color
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "bold",
-    marginBottom: 20,
+    marginBottom: 30,
     textAlign: "center",
-    color: "#333", // Optional: Adjust text color
+    color: "#E89600", // Match CraftMate's orange
   },
   input: {
     height: 50,
     borderColor: "#ccc",
     borderWidth: 1,
-    borderRadius: 5,
+    borderRadius: 8,
     marginBottom: 20,
     paddingHorizontal: 10,
-    backgroundColor: "#fff", // Ensure input field is visible
+    backgroundColor: "#fff", // White input field
   },
   button: {
+    backgroundColor: "#E89600", // CraftMate's orange
+    borderRadius: 8,
+    paddingVertical: 15,
+    alignItems: "center",
     marginTop: 10,
-    borderRadius: 5,
-    backgroundColor: "#007BFF", // Optional: Customize button color
-    paddingVertical: 12,
   },
   buttonText: {
-    textAlign: "center",
-    color: "#fff",
+    color: "#fff", // White text for the button
     fontWeight: "bold",
     fontSize: 16,
+  },
+  footer: {
+    marginTop: 20,
+    alignItems: "center",
+  },
+  footerText: {
+    fontSize: 14,
+    color: "#333", // Dark gray
+  },
+  footerLink: {
+    color: "#E89600", // Match CraftMate's orange
+    fontWeight: "bold",
   },
 });
 
