@@ -1,77 +1,66 @@
-import React from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Dimensions, TextInput, Button } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { Colors } from '../../constants/Colors';
+import { collection, addDoc, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { db } from '../../constants/firebaseConfig';
 
-const posts = [
-  {
-    id: '1',
-    title: 'Need help with React Native',
-    content: 'This is the content of the first post.',
-    profileImage: require('../../assets/images/darick.jpeg'),
-  },
-  {
-    id: '2',
-    title: 'Second Post',
-    content: 'This is the content of the second post.',
-    profileImage: 'https://via.placeholder.com/50', // Placeholder image URL
-  },
-  {
-    id: '3',
-    title: 'Third Post',
-    content: 'This is the content of the second post.',
-    profileImage: 'https://via.placeholder.com/50', // Placeholder image URL
-  },
-  {
-    id: '4',
-    title: 'Fourth Post',
-    content: 'This is the content of the second post.',
-    profileImage: 'https://via.placeholder.com/50', // Placeholder image URL
-  },
-  {
-    id: '5',
-    title: 'Fifth Post',
-    content: 'This is the content of the second post.',
-    profileImage: 'https://via.placeholder.com/50', // Placeholder image URL
-  },
-  {
-    id: '6',
-    title: 'Sixth Post',
-    content: 'This is the content of the second post.',
-    profileImage: 'https://via.placeholder.com/50', // Placeholder image URL
-  },
-  {
-    id: '7',
-    title: 'Seventh Post',
-    content: 'This is the content of the second post.',
-    profileImage: 'https://via.placeholder.com/50', // Placeholder image URL
-  },
-  // Add more posts as needed
-];
-
-interface PostItemProps {
-  title: string;
+interface Post {
+  id: string;
+  userId: string;
   content: string;
+  timestamp: string;
+  likes: number;
+  comments: string[];
   profileImage: any; // You can replace 'any' with the appropriate type if known
-  theme: string;
 }
 
-const PostItem: React.FC<PostItemProps> = ({ title, content, profileImage, theme }) => (
+const PostItem: React.FC<Post> = ({ userId, content, timestamp, likes, comments, profileImage, theme }) => (
   <View style={[styles.postContainer, { backgroundColor: Colors[theme].postBackground, shadowColor: Colors[theme].shadowColor }]}>
     <Image source={profileImage} style={styles.profileImage} />
     <View style={styles.postContentContainer}>
-      <Text style={[styles.postTitle, { color: Colors[theme].text }]}>{title}</Text>
+      <Text style={[styles.postTitle, { color: Colors[theme].text }]}>{userId}</Text>
       <Text style={[styles.postContent, { color: Colors[theme].postText }]}>{content}</Text>
+      <Text style={[styles.postTimestamp, { color: Colors[theme].postText }]}>{new Date(timestamp).toLocaleString()}</Text>
     </View>
   </View>
 );
 
 const App = () => {
   const theme = useColorScheme() || 'light'; // Provide a default theme
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [newPostContent, setNewPostContent] = useState('');
 
-  const renderItem = ({ item }: { item: { id: string; title: string; content: string; profileImage: any } }) => (
+  useEffect(() => {
+    const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const posts = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Post[];
+      setPosts(posts);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleAddPost = async () => {
+    if (newPostContent.trim()) {
+      await addDoc(collection(db, 'posts'), {
+        userId: 'currentUserId', // Replace with the actual current user ID
+        content: newPostContent,
+        timestamp: new Date().toISOString(),
+        likes: 0,
+        comments: [],
+        profileImage: 'https://via.placeholder.com/50', // Placeholder image URL
+      });
+      setNewPostContent('');
+    }
+  };
+
+  const renderItem = ({ item }: { item: Post }) => (
     <TouchableOpacity>
-      <PostItem title={item.title} content={item.content} profileImage={item.profileImage} theme={theme} />
+      <PostItem {...item} theme={theme} />
     </TouchableOpacity>
   );
 
@@ -84,6 +73,15 @@ const App = () => {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
       />
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          value={newPostContent}
+          onChangeText={setNewPostContent}
+          placeholder="Write a new post..."
+        />
+        <Button title="Post" onPress={handleAddPost} />
+      </View>
     </View>
   );
 };
@@ -131,6 +129,25 @@ const styles = StyleSheet.create({
   },
   postContent: {
     fontSize: 14,
+  },
+  postTimestamp: {
+    fontSize: 12,
+    marginTop: 5,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#ccc',
+  },
+  input: {
+    flex: 1,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    marginRight: 10,
   },
 });
 
