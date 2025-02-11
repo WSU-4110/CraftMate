@@ -26,8 +26,9 @@ export default function TabLayout() {
           tabBarStyle: { backgroundColor: '#E89600' }, // Fixed background color
         }}
       >
+      
         <Tabs.Screen
-          name="explore"
+          name="chat"
           options={{
             tabBarIcon: ({ color }) => <IconSymbol size={32} name="bubble.left.fill" color={color} />,
           }}
