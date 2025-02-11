@@ -26,22 +26,23 @@ export default function TabLayout() {
           tabBarStyle: { backgroundColor: '#E89600' }, // Fixed background color
         }}
       >
+      
         <Tabs.Screen
-          name="explore"
+          name="chat"
           options={{
-            tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.circle" color={color} />,
+            tabBarIcon: ({ color }) => <IconSymbol size={32} name="bubble.left.fill" color={color} />,
           }}
         />
         <Tabs.Screen
           name="index"
           options={{
-            tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+            tabBarIcon: ({ color }) => <IconSymbol size={32} name="house.fill" color={color} />,
           }}
         />
         <Tabs.Screen
           name="login"
           options={{
-            tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.crop.circle.fill" color={color} />,
+            tabBarIcon: ({ color }) => <IconSymbol size={32} name="person.crop.circle.fill" color={color} />,
           }}
         />
       </Tabs>
