@@ -14,6 +14,7 @@ Make sure you have the following installed before proceeding:
 - Node.js (v16 or later) – [Download here](https://nodejs.org/)
 - npm (comes with Node.js)
 - Expo CLI (for React Native development)
+- Expo Go App (install from the App Store or Google Play)
 - Firebase CLI (for backend setup)
 - Twilio Account (for video and chat functionality)
 
@@ -59,6 +60,7 @@ Start the development server:
 ```sh
 npx expo start
 ```
+In the output, you'll find options to open the app.
 
 ## Built With
 - **React Native** – Mobile app development
