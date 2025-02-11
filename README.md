@@ -71,8 +71,6 @@ npx expo start
 - **Anas Khouja** – Frontend Development - https://github.com/anaskhouja
 - **Darick Le** – Project Lead + Full Stack Developer – https://github.com/darickle
 
-See the contributors who participated in this project.
-
 ## Acknowledgments
 - **React Native & Firebase Communities** for resources and tutorials
 - **Twilio Docs** for API integration guidance
