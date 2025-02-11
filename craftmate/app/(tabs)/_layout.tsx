@@ -29,19 +29,19 @@ export default function TabLayout() {
         <Tabs.Screen
           name="explore"
           options={{
-            tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.circle" color={color} />,
+            tabBarIcon: ({ color }) => <IconSymbol size={36} name="bubble.left" color={color} />,
           }}
         />
         <Tabs.Screen
           name="index"
           options={{
-            tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+            tabBarIcon: ({ color }) => <IconSymbol size={36} name="house" color={color} />,
           }}
         />
         <Tabs.Screen
           name="login"
           options={{
-            tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.crop.circle.fill" color={color} />,
+            tabBarIcon: ({ color }) => <IconSymbol size={36} name="person.crop.circle" color={color} />,
           }}
         />
       </Tabs>
