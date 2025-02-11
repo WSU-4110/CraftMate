@@ -21,7 +21,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 20,
     paddingHorizontal: 10,
-    backgroundColor: "#fff", // White input field
   },
   button: {
     backgroundColor: "#E89600", // CraftMate's orange
