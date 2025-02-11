@@ -104,8 +104,8 @@ const App = () => {
       />
       <View style={[styles.inputContainer, { backgroundColor: Colors[theme].background, borderColor: Colors[theme].text }]}>
         <TextInput
-          placeholderTextColor={Colors[theme].placeholderText}
-          style={[styles.input, { borderColor: Colors[theme].text }]}
+          placeholderTextColor={Colors[theme].text}
+          style={[styles.input, { borderColor: Colors[theme].text, color: Colors[theme].text }]} // Add color property here
           value={newPostContent}
           onChangeText={setNewPostContent}
           placeholder="Write a new post..."
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
   profileImage: {
     width: 50, // Adjust the width as needed
     height: 50, // Adjust the height as needed
-    borderRadius: 10, // Make the image circular
+    borderRadius: 25, // Make the image circular
     marginRight: 15, // Add some space between the image and the content
   },
   postContentContainer: {
