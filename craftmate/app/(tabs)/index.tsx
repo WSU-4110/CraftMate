@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Dimensions, TextInput, Button } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Dimensions, TextInput } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import { collection, addDoc, query, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore';
@@ -13,19 +13,27 @@ interface Post {
   timestamp: string;
   likes: number;
   comments: string[];
-  profileImage: any; // You can replace 'any' with the appropriate type if known
+  profileImage: string; // Use string type for profileImage
 }
 
-const PostItem: React.FC<Post> = ({ username, content, timestamp, likes, comments, profileImage, theme }) => (
-  <View style={[styles.postContainer, { backgroundColor: Colors[theme].postBackground, shadowColor: Colors[theme].shadowColor }]}>
-    <Image source={{ uri: profileImage }} style={styles.profileImage} />
-    <View style={styles.postContentContainer}>
-      <Text style={[styles.postTitle, { color: Colors[theme].text }]}>{username}</Text>
-      <Text style={[styles.postContent, { color: Colors[theme].postText }]}>{content}</Text>
-      <Text style={[styles.postTimestamp, { color: Colors[theme].postText }]}>{new Date(timestamp).toLocaleString()}</Text>
+const PostItem: React.FC<Post> = ({ username, content, timestamp, likes, comments, profileImage, theme }) => {
+  const [imageError, setImageError] = useState(false);
+
+  return (
+    <View style={[styles.postContainer, { backgroundColor: Colors[theme].postBackground }]}>
+      <Image
+        source={imageError ? require('../../assets/images/blank-profile.jpeg') : { uri: profileImage }}
+        style={styles.profileImage}
+        onError={() => setImageError(true)}
+      />
+      <View style={styles.postContentContainer}>
+        <Text style={[styles.postTitle, { color: Colors[theme].text }]}>{username}</Text>
+        <Text style={[styles.postContent, { color: Colors[theme].postText }]}>{content}</Text>
+        <Text style={[styles.postTimestamp, { color: Colors[theme].postText }]}>{new Date(timestamp).toLocaleString()}</Text>
+      </View>
     </View>
-  </View>
-);
+  );
+};
 
 const App = () => {
   const theme = useColorScheme() || 'light'; // Provide a default theme
@@ -72,7 +80,7 @@ const App = () => {
         timestamp: new Date().toISOString(),
         likes: 0,
         comments: [],
-        profileImage: user.photoURL || 'https://via.placeholder.com/50', // Use user's profile image or a placeholder
+        profileImage: user.photoURL || require('../../assets/images/blank-profile.jpeg'), // Use user's profile image or a placeholder
         userId: user.uid, // Store the user ID to link the post to the user
       });
       setNewPostContent('');
@@ -94,14 +102,20 @@ const App = () => {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
       />
-      <View style={styles.inputContainer}>
+      <View style={[styles.inputContainer, { backgroundColor: Colors[theme].background, borderColor: Colors[theme].text }]}>
         <TextInput
-          style={styles.input}
+          placeholderTextColor={Colors[theme].icon}
+          style={[styles.input, { borderColor: Colors[theme].text, color: Colors[theme].text }]} // Add color property here
           value={newPostContent}
           onChangeText={setNewPostContent}
           placeholder="Write a new post..."
         />
-        <Button title="Post" onPress={handleAddPost} />
+        <TouchableOpacity
+          style={[styles.postButton]}
+          onPress={handleAddPost}
+        >
+          <Text style={[styles.postButtonText, { color: Colors[theme].background }]}>Post</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -128,9 +142,6 @@ const styles = StyleSheet.create({
     padding: 15,
     marginVertical: 8,
     borderRadius: 20,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
     elevation: 3,
     width: '100%', // Make sure the posts take the full width
   },
@@ -158,17 +169,29 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#ccc',
+    padding: 0, // Reduced padding to make the container tighter
+    borderRadius: 10, // Rounded corners for the container
+    textDecorationLine: 'underline', // underline text
+    borderWidth: 0, // Add a border to the container
+    boxShadow: '0 0 2px rgba(0, 0, 0, 1)', // Add a shadow to the container
+    width: '95%', // Ensure the container takes the full width
+    marginBottom: 5, // Add some space below the input container
   },
   input: {
     flex: 1,
     padding: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
     borderRadius: 5,
-    marginRight: 10,
+  },
+  postButton: {
+    backgroundColor: '#E89600',
+    paddingHorizontal: 30,
+    paddingVertical: 10,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  postButtonText: {
+    fontWeight: 'bold',
   },
 });
 
