@@ -104,7 +104,7 @@ const App = () => {
       />
       <View style={[styles.inputContainer, { backgroundColor: Colors[theme].background, borderColor: Colors[theme].text }]}>
         <TextInput
-          placeholderTextColor={Colors[theme].text}
+          placeholderTextColor={Colors[theme].icon}
           style={[styles.input, { borderColor: Colors[theme].text, color: Colors[theme].text }]} // Add color property here
           value={newPostContent}
           onChangeText={setNewPostContent}
