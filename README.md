@@ -82,5 +82,5 @@ In the output, you'll find options to open the app.
 - **Our team members** for collaboration and development
 
 ## Supervision
- Arif Rahman, Lab Instructor, CSC4110
+ Arif Rahman, Lab Instructor,FALL'2025, CSC4110
 
