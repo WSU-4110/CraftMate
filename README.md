@@ -69,9 +69,9 @@ In the output, you'll find options to open the app.
 
 ## Authors
 
-- **Shahab Alriyashi** –  Twilio & Firebase Integration - https://github.com/shab2022
+- **Shahab Alriyashi** –  Backend API + Firebase Integration  - https://github.com/shab2022
 - **Keenan Dalati** – Frontend Development - https://github.com/Keekee810
-- **Warif Hussini** – Backend Development - https://github.com/Waroof
+- **Warif Hussini** – Backend API + User Authentication - https://github.com/Waroof
 - **Anas Khouja** – Frontend Development - https://github.com/anaskhouja
 - **Darick Le** – Project Lead + Full Stack Developer – https://github.com/darickle
 
