@@ -75,7 +75,12 @@ In the output, you'll find options to open the app.
 - **Anas Khouja** – Frontend Development - https://github.com/anaskhouja
 - **Darick Le** – Project Lead + Full Stack Developer – https://github.com/darickle
 
+
 ## Acknowledgments
 - **React Native & Firebase Communities** for resources and tutorials
 - **Twilio Docs** for API integration guidance
 - **Our team members** for collaboration and development
+
+## Supervision
+ Arif Rahman, Lab Instructor, CSC4110
+
