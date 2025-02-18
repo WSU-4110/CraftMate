@@ -1,28 +1,48 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, FlatList, Image, ScrollView } from "react-native";
+import {
+    View,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    Image,
+    ScrollView,
+    Modal
+} from "react-native";
 import { signInWithEmailAndPassword, signOut, User } from "firebase/auth";
 import { auth, db } from "../constants/firebaseConfig";
-import { collection, addDoc, getDocs, query, orderBy, doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
+import * as ImagePicker from "expo-image-picker";
 import Toast from "react-native-toast-message";
 import { useColorScheme } from "react-native";
 import { Colors } from "../constants/Colors";
 import styles from "./LoginScreen.styles";
 
 export default function LoginScreen() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [user, setUser] = useState<User | null>(null);
-    const [idea, setIdea] = useState("");
-    const [ideas, setIdeas] = useState([]);
-    const [bio, setBio] = useState("");
-    const [profilePicture, setProfilePicture] = useState("https://via.placeholder.com/150");
+    // state variables for user authentication and UI management
+    const [email, setEmail] = useState(""); // stores user email input
+    const [password, setPassword] = useState(""); // stores user password input
+    const [user, setUser] = useState<User | null>(null); // stores authenticated user
+    const [profilePicture, setProfilePicture] = useState("https://via.placeholder.com/150"); // stores profile picture URL
+    const [username, setUsername] = useState(""); // stores username
+    const [bio, setBio] = useState(""); // stores user bio
+    const [modalVisible, setModalVisible] = useState(false); // controls profile edit modal visibility
+    
+    // get the color theme (light or dark mode)
     const theme = useColorScheme() || "light";
+    const themeColors = Colors[theme] || Colors["light"];
 
+    // effect hook to listen for authentication state changes
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((user) => {
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
             if (user) {
                 setUser(user);
-                fetchIdeas();
+                const userRef = doc(db, "users", user.uid);
+                const userSnap = await getDoc(userRef);
+                if (userSnap.exists()) {
+                    setUsername(userSnap.data().username || "");
+                    setProfilePicture(userSnap.data().profilePicture || "https://via.placeholder.com/150");
+                    setBio(userSnap.data().bio || "");
+                }
             } else {
                 setUser(null);
             }
@@ -30,14 +50,7 @@ export default function LoginScreen() {
         return unsubscribe;
     }, []);
 
-    const fetchIdeas = async () => {
-        if (!user) return;
-        const ideasQuery = query(collection(db, "ideas"), orderBy("createdAt", "desc"));
-        const querySnapshot = await getDocs(ideasQuery);
-        const ideasList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setIdeas(ideasList);
-    };
-
+    // Function to handle login
     const handleLogin = async () => {
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -48,87 +61,100 @@ export default function LoginScreen() {
         }
     };
 
-    const handleEditProfile = async () => {
-        if (!user) return;
-        try {
+    // Function to pick an image for profile picture
+    const pickImage = async () => {
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [4, 4],
+            quality: 1,
+        });
+
+        if (!result.canceled && user) {
             const userRef = doc(db, "users", user.uid);
-            await updateDoc(userRef, { bio, profilePicture });
-            Toast.show({ type: "success", text1: "Profile Updated" });
-        } catch (error) {
-            Toast.show({ type: "error", text1: "Update Failed" });
+            await updateDoc(userRef, { profilePicture: result.uri });
+            setProfilePicture(result.uri);
         }
     };
 
-    if (user) {
-        return (
-            <ScrollView contentContainerStyle={styles.scrollContainer}>
-                <View style={styles.profileContainer}>
-                    <Image source={{ uri: profilePicture }} style={styles.profileImage} />
-                    <Text style={[styles.title, { color: Colors[theme].text, marginTop: 60 }]}>Welcome, {user.email}</Text>
-                    <TextInput
-                        style={[styles.input, { backgroundColor: Colors[theme].inputBackground, color: Colors[theme].text }]}
-                        placeholder="Edit Bio"
-                        placeholderTextColor={Colors[theme].icon}
-                        value={bio}
-                        onChangeText={setBio}
-                    />
-                    <TouchableOpacity style={[styles.button, { backgroundColor: Colors[theme].tint }]} onPress={handleEditProfile}>
-                        <Text style={[styles.buttonText, { color: Colors[theme].background }]}>Update Profile</Text>
-                    </TouchableOpacity>
-                </View>
-                <View style={styles.ideaContainer}>
-                    <Text style={[styles.subtitle, { color: Colors[theme].text }]}>Share Your DIY Idea</Text>
-                    <TextInput
-                        style={[styles.input, { backgroundColor: Colors[theme].inputBackground, color: Colors[theme].text }]}
-                        placeholder="Write your idea..."
-                        placeholderTextColor={Colors[theme].icon}
-                        value={idea}
-                        onChangeText={setIdea}
-                    />
-                    <TouchableOpacity style={[styles.button, { backgroundColor: Colors[theme].tint }]}>
-                        <Text style={[styles.buttonText, { color: Colors[theme].background }]}>Post Idea</Text>
-                    </TouchableOpacity>
-                    <FlatList
-                        data={ideas}
-                        keyExtractor={(item) => item.id}
-                        renderItem={({ item }) => (
-                            <View style={styles.ideaItem}>
-                                <Text style={[styles.text, { color: Colors[theme].text }]}>{item.text}</Text>
-                                <Text style={[styles.smallText, { color: Colors[theme].icon }]}>By: {item.createdBy}</Text>
-                            </View>
-                        )}
-                    />
-                </View>
-                <TouchableOpacity style={[styles.button, { backgroundColor: Colors[theme].tint }]} onPress={() => signOut(auth)}>
-                    <Text style={[styles.buttonText, { color: Colors[theme].background }]}>Sign Out</Text>
-                </TouchableOpacity>
-            </ScrollView>
-        );
-    }
-
     return (
-        <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>            
-            <Text style={[styles.title]}>Log In</Text>
-            <TextInput
-                style={[styles.input, { backgroundColor: Colors[theme].inputBackground, color: Colors[theme].text }]}
-                placeholder="Email"
-                placeholderTextColor={Colors[theme].icon}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-            />
-            <TextInput
-                style={[styles.input, { backgroundColor: Colors[theme].inputBackground, color: Colors[theme].text }]}
-                placeholder="Password"
-                placeholderTextColor={Colors[theme].icon}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-            />
-            <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                <Text style={[styles.buttonText, { color: Colors[theme].background }]}>Log In</Text>
-            </TouchableOpacity>
-        </View>
+        <>
+            {user ? (
+                // User is logged in: Show profile screen
+                <ScrollView contentContainerStyle={styles.scrollContainer}>
+                    <View style={styles.profileContainer}>
+                        <View style={styles.profileCard}>
+                            <Image source={{ uri: profilePicture || "https://via.placeholder.com/150" }} style={styles.profileImageLarge} />
+                            <Text style={[styles.welcomeText, { color: themeColors.text }]}>{username}</Text>
+                            <Text style={styles.bioText}>{bio}</Text>
+                        </View>
+                        <TouchableOpacity style={[styles.button, styles.editButton, styles.editButtonBorder]} onPress={() => setModalVisible(true)}>
+                            <Text style={styles.buttonText}>Edit Profile</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={[styles.button, styles.signOutButton]} onPress={() => signOut(auth)}>
+                            <Text style={styles.buttonText}>Sign Out</Text>
+                        </TouchableOpacity>
+                    </View>
+                </ScrollView>
+            ) : (
+                // User is not logged in: Show login screen
+                <View style={[styles.container, { backgroundColor: themeColors.background }]}>            
+                    <Text style={[styles.title]}>Log In</Text>
+                    <TextInput
+                        style={[styles.input, { backgroundColor: themeColors.inputBackground, color: themeColors.text }]} 
+                        placeholder="Email"
+                        placeholderTextColor={themeColors.icon}
+                        value={email}
+                        onChangeText={setEmail}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                    />
+                    <TextInput
+                        style={[styles.input, { backgroundColor: themeColors.inputBackground, color: themeColors.text }]} 
+                        placeholder="Password"
+                        placeholderTextColor={themeColors.icon}
+                        value={password}
+                        onChangeText={setPassword}
+                        secureTextEntry
+                    />
+                    <TouchableOpacity style={[styles.button, { backgroundColor: themeColors.tint, padding: 15, marginTop: 20 }]} onPress={handleLogin}>
+                        <Text style={[styles.buttonText, { color: themeColors.background, fontSize: 18, fontWeight: 'bold' }]}>Log In</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+            
+            {/* Modal for editing profile */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContainer}>
+                        <Image source={{ uri: profilePicture || "https://via.placeholder.com/150" }} style={styles.modalProfileImage} />
+                        <Text style={styles.modalTitle}>Edit Profile</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={username}
+                            onChangeText={setUsername}
+                            placeholder="Enter new username"
+                        />
+                        <TextInput
+                            style={styles.input}
+                            value={bio}
+                            onChangeText={setBio}
+                            placeholder="Enter your bio"
+                        />
+                        <TouchableOpacity style={[styles.modalButton, styles.changePicButton]} onPress={pickImage}>
+                            <Text style={styles.modalButtonText}>Change Profile Picture</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={[styles.modalButton, styles.closeButton]} onPress={() => setModalVisible(false)}>
+                            <Text style={styles.modalButtonText}>Close</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+        </>
     );
 }
