@@ -1,4 +1,3 @@
-// app/post/[id].tsx
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Image, TextInput } from 'react-native';
 import { useColorScheme } from 'react-native';
@@ -88,12 +87,16 @@ const PostDetailScreen = () => {
   };
 
   if (!post) {
-    return <Text>Loading...</Text>;
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Loading...</Text> {/* Wrap the text in a <Text> component */}
+      </View>
+    );
   }
 
   return (
     <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
-      <View style={[styles.postContainer, { backgroundColor: Colors[theme].postBackground }]}>
+      <View style={[styles.postContainer, { backgroundColor: Colors[theme].tint }]}>
         <Image source={{ uri: post.profileImage }} style={styles.profileImage} />
         <View style={styles.postContentContainer}>
           <Text style={[styles.postTitle, { color: Colors[theme].text }]}>{post.username}</Text>
@@ -104,7 +107,7 @@ const PostDetailScreen = () => {
       <FlatList
         data={comments}
         renderItem={({ item }) => (
-          <View style={styles.commentContainer}>
+          <View style={[styles.commentContainer, {backgroundColor: Colors[theme].tint }]}>
             <Image source={{ uri: item.profileImage }} style={styles.commentProfileImage} />
             <View style={styles.commentContentContainer}>
               <Text style={[styles.commentUsername, { color: Colors[theme].text }]}>{item.username}</Text>
@@ -124,7 +127,7 @@ const PostDetailScreen = () => {
           placeholder="Write a comment..."
         />
         <TouchableOpacity
-          style={[styles.commentButton, { backgroundColor: Colors[theme].primary }]}
+          style={[styles.postButton]}
           onPress={handleAddComment}
         >
           <Text style={[styles.commentButtonText, { color: Colors[theme].background }]}>Post</Text>

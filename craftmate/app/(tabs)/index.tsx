@@ -71,7 +71,7 @@ const HomeScreen = () => {
 
   const renderItem = ({ item }: { item: Post }) => (
     <TouchableOpacity onPress={() => router.push(`/post/${item.id}`)}> {/* Use router.push */}
-      <View style={[styles.postContainer, { backgroundColor: Colors[theme].postBackground }]}>
+      <View style={[styles.postContainer, { backgroundColor: Colors[theme].tint }]}>
         <Image source={{ uri: item.profileImage }} style={styles.profileImage} />
         <View style={styles.postContentContainer}>
           <Text style={[styles.postTitle, { color: Colors[theme].text }]}>{item.username}</Text>
