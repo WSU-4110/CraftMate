@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Button, FlatList, StyleSheet, Platform, KeyboardAvoidingView } from 'react-native';
+
+interface Message {
+    id: string;
+    text: string;
+}
 
 const MessagesScreen = () => {
-    const [messages, setMessages] = useState([]);
+    const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
 
     const handleAddMessage = () => {
@@ -13,6 +18,11 @@ const MessagesScreen = () => {
     };
 
     return (
+        <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === "ios" ? "padding" : "height"} 
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        >
         <View style={styles.container}>
             <FlatList
                 data={messages}
@@ -31,6 +41,7 @@ const MessagesScreen = () => {
                 onPress={handleAddMessage}
             />
         </View>
+        </KeyboardAvoidingView>
     );
 };
 
