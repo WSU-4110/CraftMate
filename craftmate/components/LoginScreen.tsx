@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
-import { signInWithEmailAndPassword, signOut, User } from "firebase/auth";
-import { auth } from "../constants/firebaseConfig";
+import { signInWithEmailAndPassword, signOut, signInWithCredential, GoogleAuthProvider, User } from "firebase/auth";
+import { auth, googleConfig } from "../constants/firebaseConfig";
+import * as Google from "expo-auth-session/providers/google";
 import Toast from "react-native-toast-message";
 import { Link, useRouter } from "expo-router";
 import { useColorScheme } from 'react-native';
@@ -12,20 +13,42 @@ export default function LoginScreen() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [user, setUser] = useState<User | null>(null);
-    const theme = useColorScheme() || 'light'; // Provide a default theme
+    const theme = useColorScheme() || 'light';
     const router = useRouter();
 
-    useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((user) => {
-            if (user) {
-                setUser(user);
-            } else {
-                setUser(null);
-            }
-        });
-        return unsubscribe;
-    }, []);
+    // Google Sign-In Hook
+    const [request, response, promptAsync] = Google.useAuthRequest({
+        androidClientId: googleConfig.androidClientId,
+        iosClientId: googleConfig.iosClientId,
+        webClientId: googleConfig.webClientId,
+    });
 
+    // Handle Google Sign-In Response
+    useEffect(() => {
+        if (response?.type === "success") {
+            const { id_token } = response.params;
+            const credential = GoogleAuthProvider.credential(id_token);
+            signInWithCredential(auth, credential)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    Toast.show({
+                        type: "success",
+                        text1: "Google Sign-In Successful",
+                        text2: `Welcome ${user.displayName || user.email}`,
+                    });
+                    setUser(user);
+                })
+                .catch((error) => {
+                    Toast.show({
+                        type: "error",
+                        text1: "Google Sign-In Failed",
+                        text2: error.message,
+                    });
+                });
+        }
+    }, [response]);
+
+    // Handle Email/Password Login
     const handleLogin = async () => {
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -45,6 +68,7 @@ export default function LoginScreen() {
         }
     };
 
+    // Handle Sign Out
     const handleSignOut = async () => {
         try {
             await signOut(auth);
@@ -63,6 +87,7 @@ export default function LoginScreen() {
         }
     };
 
+    // User Profile (If Logged In)
     if (user) {
         return (
             <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
@@ -75,6 +100,7 @@ export default function LoginScreen() {
         );
     }
 
+    // Login Form
     return (
         <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
             <Text style={[styles.title]}>Log In</Text>
@@ -95,13 +121,20 @@ export default function LoginScreen() {
                 onChangeText={setPassword}
                 secureTextEntry
             />
-            <TouchableOpacity style={ styles.button } onPress={handleLogin}>
+
+            <TouchableOpacity style={styles.button} onPress={handleLogin}>
                 <Text style={[styles.buttonText, { color: Colors[theme].background }]}>Log In</Text>
             </TouchableOpacity>
+
+            {/* Google Sign-In Button */}
+            <TouchableOpacity style={styles.googleButton} onPress={() => promptAsync()}>
+                <Text style={styles.buttonText}>Sign in with Google</Text>
+            </TouchableOpacity>
+
             <View style={styles.footer}>
                 <Text style={[styles.footerText, { color: Colors[theme].text }]}>
                     Don't have an account?{" "}
-                    <Link href="../auth/signup" style={[styles.footerLink]}>
+                    <Link href="../auth/signup" style={styles.footerLink}>
                         Sign Up
                     </Link>
                 </Text>

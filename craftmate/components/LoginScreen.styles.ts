@@ -7,6 +7,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#f5f5f5", // Light background color
   },
+  googleButton: {
+    backgroundColor: "#4285F4", // Google's blue color
+    borderRadius: 8,
+    paddingVertical: 15,
+    alignItems: "center",
+    marginTop: 10,
+},
+
   title: {
     fontSize: 32,
     fontWeight: "bold",
