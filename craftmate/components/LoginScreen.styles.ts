@@ -8,7 +8,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5f5f5", // Light background color
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: "bold",
     marginBottom: 30,
     textAlign: "center",
@@ -21,7 +21,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 20,
     paddingHorizontal: 10,
-    backgroundColor: "#fff", // White input field
   },
   button: {
     backgroundColor: "#E89600", // CraftMate's orange
@@ -31,7 +30,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   buttonText: {
-    color: "#fff", // White text for the button
     fontWeight: "bold",
     fontSize: 16,
   },
