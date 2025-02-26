@@ -1,28 +1,36 @@
 {
-    "cli": {
-      "version": ">=0.45.0"
+  "cli": {
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "distribution": "internal",
+      "env": {
+        "KOTLIN_VERSION": "1.9.25"
+      },
+      "android": {
+        "buildType": "apk"
+      }
     },
-    "build": {
-      "development": {
-        "distribution": "internal",
-        "android": {
-          "buildType": "apk"
-        }
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "KOTLIN_VERSION": "1.9.25"
       },
-      "preview": {
-        "distribution": "internal",
-        "android": {
-          "buildType": "app-bundle"
-        }
+      "android": {
+        "buildType": "app-bundle"
+      }
+    },
+    "production": {
+      "env": {
+        "KOTLIN_VERSION": "1.9.25"
       },
-      "production": {
-        "android": {
-          "buildType": "app-bundle"
-        },
-        "ios": {
-          "simulator": false
-        }
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "ios": {
+        "simulator": true
       }
     }
   }
-  
+}

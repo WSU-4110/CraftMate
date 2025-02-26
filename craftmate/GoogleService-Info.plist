@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CLIENT_ID</key>
+	<string>95683048337-jr9b4n2mtl02fmhflav5ip17k6ggq46l.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.95683048337-jr9b4n2mtl02fmhflav5ip17k6ggq46l</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>95683048337-f7thim3aaf4okdar7q6jcm8g804pmdis.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
 	<string>AIzaSyD0bgNG__btiBZTria6iU9phcqHEmsZy-8</string>
 	<key>GCM_SENDER_ID</key>
@@ -26,5 +32,7 @@
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
 	<string>1:95683048337:ios:d83668f9f979653e4c2030</string>
+	<key>DATABASE_URL</key>
+	<string>https://craftmate-aacfe-default-rtdb.firebaseio.com</string>
 </dict>
 </plist>

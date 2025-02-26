@@ -1,7 +1,7 @@
-{
+export default {
   "expo": {
     "name": "craftmate",
-    "slug": "craftmate",
+    "slug": "Craftmate",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -9,13 +9,21 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.CSC4110.craftmate",
+      "googleServicesFile": process.env.GOOGLE_SERVICES_INFOPLIST,
+      
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.CSC4110.craftmate",
+      "googleServicesFile": process.env.GOOGLE_SERVICES_JSON
     },
     "web": {
       "bundler": "metro",
@@ -23,7 +31,9 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      "@react-native-google-signin/google-signin",
       "expo-router",
+      
       [
         "expo-splash-screen",
         {
@@ -33,15 +43,16 @@
           "backgroundColor": "#ffffff"
         }
       ]
+      
     ],
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
       "eas": {
-        "projectId": "17c51206-589a-4f09-858f-843bbebd3c9d"
+        "projectId": "40c65938-2126-4813-9de6-266942c0711d"
       }
     },
-    "owner": "kodedalatemy"
+    "owner": "waroof"
   }
 }

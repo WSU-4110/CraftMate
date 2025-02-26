@@ -8,20 +8,33 @@ import { Link, useRouter } from "expo-router";
 import { useColorScheme } from 'react-native';
 import { Colors } from '../constants/Colors';
 import styles from "./LoginScreen.styles";
+import * as AuthSession from "expo-auth-session";
+import {GoogleSignin, GoogleSigninButton} from '@react-native-google-signin/google-signin'
 
 export default function LoginScreen() {
+
+
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [user, setUser] = useState<User | null>(null);
     const theme = useColorScheme() || 'light';
     const router = useRouter();
+    
 
     // Google Sign-In Hook
-    const [request, response, promptAsync] = Google.useAuthRequest({
+    const redirectUri = AuthSession.makeRedirectUri({
+        native: "com.CSC4110.craftmate:/oauthredirect",
+      });
+      
+      
+
+      const [request, response, promptAsync] = Google.useAuthRequest({
         androidClientId: googleConfig.androidClientId,
         iosClientId: googleConfig.iosClientId,
         webClientId: googleConfig.webClientId,
+        redirectUri, //
     });
+    
 
     // Handle Google Sign-In Response
     useEffect(() => {
