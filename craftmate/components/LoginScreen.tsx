@@ -1,77 +1,41 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
-import { signInWithEmailAndPassword, signOut, signInWithCredential, GoogleAuthProvider, User } from "firebase/auth";
-import { auth, googleConfig } from "../constants/firebaseConfig";
-import * as Google from "expo-auth-session/providers/google";
+import { signInWithEmailAndPassword, signOut, User } from "firebase/auth";
+import { auth } from "../constants/firebaseConfig";
 import Toast from "react-native-toast-message";
-import { Link, useRouter } from "expo-router";
-import { useColorScheme } from 'react-native';
-import { Colors } from '../constants/Colors';
+import { Link } from "expo-router";
+import { useColorScheme } from "react-native";
+import { Colors } from "../constants/Colors";
 import styles from "./LoginScreen.styles";
-import * as AuthSession from "expo-auth-session";
-
+import GoogleAuthFacade from "../components/utils/GoogleAuthFacade"; 
 
 export default function LoginScreen() {
-
-
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [user, setUser] = useState<User | null>(null);
-    const theme = useColorScheme() || 'light';
-    const router = useRouter();
-    
+    const theme = useColorScheme() || "light";
 
-    // Google Sign-In Hook
-    const redirectUri = AuthSession.makeRedirectUri({
-        native: "com.CSC4110.craftmate:/oauthredirect",
-      });
-      
-      
-
-      const [request, response, promptAsync] = Google.useAuthRequest({
-        androidClientId: googleConfig.androidClientId,
-        iosClientId: googleConfig.iosClientId,
-        webClientId: googleConfig.webClientId,
-        redirectUri, //
-    });
-    
-
-    // Handle Google Sign-In Response
-    useEffect(() => {
-        if (response?.type === "success") {
-            const { id_token } = response.params;
-            const credential = GoogleAuthProvider.credential(id_token);
-            signInWithCredential(auth, credential)
-                .then((userCredential) => {
-                    const user = userCredential.user;
-                    Toast.show({
-                        type: "success",
-                        text1: "Google Sign-In Successful",
-                        text2: `Welcome ${user.displayName || user.email}`,
-                    });
-                    setUser(user);
-                })
-                .catch((error) => {
-                    Toast.show({
-                        type: "error",
-                        text1: "Google Sign-In Failed",
-                        text2: error.message,
-                    });
-                });
+    const handleGoogleSignIn = async () => {
+        const authenticatedUser = await GoogleAuthFacade.getInstance().signIn();
+        if (authenticatedUser) {
+            Toast.show({
+                type: "success",
+                text1: "Google Sign-In Successful",
+                text2: `Welcome ${authenticatedUser.displayName || authenticatedUser.email}`,
+            });
+            setUser(authenticatedUser);
         }
-    }, [response]);
+    };
 
-    // Handle Email/Password Login
     const handleLogin = async () => {
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
+            setUser(userCredential.user);
             Toast.show({
                 type: "success",
                 text1: "Welcome",
-                text2: `Logged in as ${user.email}`,
+                text2: `Logged in as ${userCredential.user.email}`,
             });
-            setUser(user);
         } catch (error: any) {
             Toast.show({
                 type: "error",
@@ -81,7 +45,6 @@ export default function LoginScreen() {
         }
     };
 
-    // Handle Sign Out
     const handleSignOut = async () => {
         try {
             await signOut(auth);
@@ -100,7 +63,6 @@ export default function LoginScreen() {
         }
     };
 
-    // User Profile (If Logged In)
     if (user) {
         return (
             <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
@@ -113,7 +75,6 @@ export default function LoginScreen() {
         );
     }
 
-    // Login Form
     return (
         <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
             <Text style={[styles.title]}>Log In</Text>
@@ -140,7 +101,7 @@ export default function LoginScreen() {
             </TouchableOpacity>
 
             {/* Google Sign-In Button */}
-            <TouchableOpacity style={styles.googleButton} onPress={() => promptAsync()}>
+            <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignIn}>
                 <Text style={styles.buttonText}>Sign in with Google</Text>
             </TouchableOpacity>
 
