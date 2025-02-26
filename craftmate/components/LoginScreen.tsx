@@ -9,7 +9,7 @@ import { useColorScheme } from 'react-native';
 import { Colors } from '../constants/Colors';
 import styles from "./LoginScreen.styles";
 import * as AuthSession from "expo-auth-session";
-import {GoogleSignin, GoogleSigninButton} from '@react-native-google-signin/google-signin'
+
 
 export default function LoginScreen() {
 
