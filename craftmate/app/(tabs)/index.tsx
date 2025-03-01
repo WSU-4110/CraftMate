@@ -1,6 +1,6 @@
 // app/(tabs)/index.tsx
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Dimensions, TextInput } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Dimensions,Platform, TextInput, KeyboardAvoidingView } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import { collection, query, orderBy, onSnapshot, addDoc, doc, getDoc } from 'firebase/firestore';
@@ -83,6 +83,12 @@ const HomeScreen = () => {
   );
 
   return (
+
+    <KeyboardAvoidingView 
+    style={{ flex: 1 }} 
+    behavior={Platform.OS === "ios" ? "padding" : "height"} 
+    keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+    >
     <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
       <Image source={require('../../assets/images/craftmate-logo.png')} style={styles.logo} />
       <FlatList
@@ -107,6 +113,7 @@ const HomeScreen = () => {
         </TouchableOpacity>
       </View>
     </View>
+    </KeyboardAvoidingView>
   );
 };
 
