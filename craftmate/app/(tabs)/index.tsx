@@ -1,10 +1,12 @@
+// app/(tabs)/index.tsx
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Dimensions,Platform, TextInput, KeyboardAvoidingView } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { Colors } from '../../constants/Colors';
-import { collection, addDoc, query, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../constants/firebaseConfig';
 import { getAuth } from 'firebase/auth';
+import { useRouter } from 'expo-router'; // Import useRouter
 
 interface Post {
   id: string;
@@ -12,33 +14,14 @@ interface Post {
   content: string;
   timestamp: string;
   likes: number;
-  comments: string[];
-  profileImage: string; // Use string type for profileImage
+  profileImage: string;
 }
 
-const PostItem: React.FC<Post> = ({ username, content, timestamp, likes, comments, profileImage, theme }) => {
-  const [imageError, setImageError] = useState(false);
-
-  return (
-    <View style={[styles.postContainer, { backgroundColor: Colors[theme].postBackground }]}>
-      <Image
-        source={imageError ? require('../../assets/images/blank-profile.jpeg') : { uri: profileImage }}
-        style={styles.profileImage}
-        onError={() => setImageError(true)}
-      />
-      <View style={styles.postContentContainer}>
-        <Text style={[styles.postTitle, { color: Colors[theme].text }]}>{username}</Text>
-        <Text style={[styles.postContent, { color: Colors[theme].postText }]}>{content}</Text>
-        <Text style={[styles.postTimestamp, { color: Colors[theme].postText }]}>{new Date(timestamp).toLocaleString()}</Text>
-      </View>
-    </View>
-  );
-};
-
-const App = () => {
-  const theme = useColorScheme() || 'light'; // Provide a default theme
+const HomeScreen = () => {
+  const theme = useColorScheme() || 'light';
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPostContent, setNewPostContent] = useState('');
+  const router = useRouter(); // Initialize router
 
   useEffect(() => {
     const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
@@ -75,21 +58,27 @@ const App = () => {
 
     if (newPostContent.trim()) {
       await addDoc(collection(db, 'posts'), {
-        username, // Use the username from the Firestore user document
+        username,
         content: newPostContent,
         timestamp: new Date().toISOString(),
         likes: 0,
-        comments: [],
-        profileImage: user.photoURL || require('../../assets/images/blank-profile.jpeg'), // Use user's profile image or a placeholder
-        userId: user.uid, // Store the user ID to link the post to the user
+        profileImage: user.photoURL || require('../../assets/images/blank-profile.jpeg'),
+        userId: user.uid,
       });
       setNewPostContent('');
     }
   };
 
   const renderItem = ({ item }: { item: Post }) => (
-    <TouchableOpacity>
-      <PostItem {...item} theme={theme} />
+    <TouchableOpacity onPress={() => router.push(`/post/${item.id}`)}> {/* Use router.push */}
+      <View style={[styles.postContainer, { backgroundColor: Colors[theme].tint }]}>
+        <Image source={{ uri: item.profileImage }} style={styles.profileImage} />
+        <View style={styles.postContentContainer}>
+          <Text style={[styles.postTitle, { color: Colors[theme].text }]}>{item.username}</Text>
+          <Text style={[styles.postContent, { color: Colors[theme].postText }]}>{item.content}</Text>
+          <Text style={[styles.postTimestamp, { color: Colors[theme].postText }]}>{new Date(item.timestamp).toLocaleString()}</Text>
+        </View>
+      </View>
     </TouchableOpacity>
   );
 
@@ -111,7 +100,7 @@ const App = () => {
       <View style={[styles.inputContainer, { backgroundColor: Colors[theme].background, borderColor: Colors[theme].text }]}>
         <TextInput
           placeholderTextColor={Colors[theme].icon}
-          style={[styles.input, { borderColor: Colors[theme].text, color: Colors[theme].text }]} // Add color property here
+          style={[styles.input, { borderColor: Colors[theme].text, color: Colors[theme].text }]}
           value={newPostContent}
           onChangeText={setNewPostContent}
           placeholder="Write a new post..."
@@ -202,4 +191,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default App;
+export default HomeScreen;
