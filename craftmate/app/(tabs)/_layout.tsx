@@ -1,6 +1,5 @@
-import { Tabs } from 'expo-router';
+import { Tabs, Stack } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
 import Toast from 'react-native-toast-message'; // ✅ Import Toast
 
 import { HapticTab } from '@/components/HapticTab';
@@ -26,7 +25,10 @@ export default function TabLayout() {
           tabBarStyle: { backgroundColor: '#E89600' }, // Fixed background color
         }}
       >
-      
+        {/* Home Screen */}
+
+
+        {/* Chat List Screen (User List for Private Chats) */}
         <Tabs.Screen
           name="chat"
           options={{
@@ -39,10 +41,21 @@ export default function TabLayout() {
             tabBarIcon: ({ color }) => <IconSymbol size={32} name="house.fill" color={color} />,
           }}
         />
+        
+        {/* Login Screen */}
         <Tabs.Screen
-          name="login"
+          name="signup"
           options={{
             tabBarIcon: ({ color }) => <IconSymbol size={32} name="person.crop.circle.fill" color={color} />,
+          }}
+        />
+        
+
+        {/* Stack Navigation for Private Messages */}
+        <Tabs.Screen
+          name="messages"
+          options={{
+            href: null, // Hide from the tab bar, but allow navigation
           }}
         />
       </Tabs>
