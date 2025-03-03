@@ -55,7 +55,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="messages"
           options={{
-            href: null, // Hide from the tab bar, but allow navigation
+            href: null, 
           }}
         />
       </Tabs>
