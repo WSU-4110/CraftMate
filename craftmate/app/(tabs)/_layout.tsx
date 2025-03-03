@@ -44,7 +44,7 @@ export default function TabLayout() {
         
         {/* Login Screen */}
         <Tabs.Screen
-          name="signup"
+          name="login"
           options={{
             tabBarIcon: ({ color }) => <IconSymbol size={32} name="person.crop.circle.fill" color={color} />,
           }}
