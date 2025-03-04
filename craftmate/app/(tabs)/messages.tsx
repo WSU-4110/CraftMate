@@ -71,11 +71,9 @@ export default function MessagesScreen() {
             <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
                 {/* **Receiver's Username Header** */}
                 <View style={styles.header}>
-                    <View>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                         <Text style={[styles.backButtonText, { color: Colors[theme].text }]}>←</Text>
                     </TouchableOpacity>
-                    </View>
                     <Text style={[styles.headerText, { color: Colors[theme].text }]}>
                         {receiverUsername}
                     </Text>
@@ -197,6 +195,5 @@ const styles = StyleSheet.create({
     },
     sendButtonText: {
         fontWeight: 'bold',
-        color: '#fff', // Text color for visibility
     },
 });

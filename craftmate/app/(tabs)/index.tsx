@@ -1,6 +1,5 @@
-// app/(tabs)/index.tsx
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Dimensions, TextInput } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Dimensions, KeyboardAvoidingView, TextInput, Platform } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import { collection, query, orderBy, onSnapshot, addDoc, doc, getDoc } from 'firebase/firestore';
@@ -83,37 +82,44 @@ const HomeScreen = () => {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
-      <Image source={require('../../assets/images/craftmate-logo.png')} style={styles.logo} />
-      <FlatList
-        data={posts}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-      />
-      <View style={[styles.inputContainer, { backgroundColor: Colors[theme].background, borderColor: Colors[theme].text }]}>
-        <TextInput
-          placeholderTextColor={Colors[theme].icon}
-          style={[styles.input, { borderColor: Colors[theme].text, color: Colors[theme].text }]}
-          value={newPostContent}
-          onChangeText={setNewPostContent}
-          placeholder="Write a new post..."
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
+      <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
+        <Image source={require('../../assets/images/craftmate-logo.png')} style={styles.logo} />
+        <FlatList
+          data={posts}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          horizontal={false}
         />
-        <TouchableOpacity
-          style={[styles.postButton]}
-          onPress={handleAddPost}
-        >
-          <Text style={[styles.postButtonText, { color: Colors[theme].background }]}>Post</Text>
-        </TouchableOpacity>
+        <View style={[styles.inputContainer, { backgroundColor: Colors[theme].background, borderColor: Colors[theme].text }]}>
+          <TextInput
+            placeholderTextColor={Colors[theme].icon}
+            style={[styles.input, { borderColor: Colors[theme].text, color: Colors[theme].text }]}
+            value={newPostContent}
+            onChangeText={setNewPostContent}
+            placeholder="Write a new post..."
+          />
+          <TouchableOpacity
+            style={[styles.postButton]}
+            onPress={handleAddPost}
+          >
+            <Text style={[styles.postButtonText, { color: Colors[theme].background }]}>Post</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 10,
+    padding: 20,
     alignItems: 'center', // Center the logo horizontally
   },
   logo: {
@@ -161,8 +167,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     borderWidth: 1,
-    width: -20, // Ensure the container takes the full width
-    margin: 10, // Add some space below the input container
+    width: '100%', // Ensure the container takes the full width
   },
   input: {
     flex: 1,
