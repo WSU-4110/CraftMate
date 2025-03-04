@@ -59,12 +59,32 @@ export default function ChatListScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#fff" },
-  header: { fontSize: 20, fontWeight: "bold", marginBottom: 10 },
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#f5f5f5", // Light background color
+  },
+  header: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+    marginTop: 40, // **Added top margin to prevent clipping**
+    textAlign: "center",
+    color: "#E89600", // Match CraftMate's orange
+  },
   userItem: {
     padding: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#ccc",
+    borderRadius: 8,
+    backgroundColor: "#E89600", // Orange background
+    marginVertical: 5,
+    alignItems: "center",
   },
-  username: { fontSize: 18 },
+  username: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#fff", // White text for contrast
+  },
 });
+
