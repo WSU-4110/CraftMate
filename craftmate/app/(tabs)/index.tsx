@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     borderWidth: 0, // Add a border to the container
     boxShadow: '0 0 2px rgba(0, 0, 0, 1)', // Add a shadow to the container
     width: '95%', // Ensure the container takes the full width
-    marginBottom: 5, // Add some space below the input container
+    marginBottom: 10, // Add some space below the input container
   },
   input: {
     flex: 1,
