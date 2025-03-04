@@ -5,6 +5,7 @@ import { auth, db } from "../../constants/firebaseConfig";
 import { useLocalSearchParams } from "expo-router";
 import { useColorScheme } from "react-native";
 import { Colors } from "../../constants/Colors";
+import { useNavigation } from '@react-navigation/native'; // Import useNavigation
 
 interface Message {
     id: string;
@@ -20,6 +21,7 @@ export default function MessagesScreen() {
     const [newMessage, setNewMessage] = useState("");
     const [receiverUsername, setReceiverUsername] = useState(""); // Store receiver's username
     const theme = useColorScheme() || "light"; // Detect system theme
+    const navigation = useNavigation(); // Use the navigation hook
 
     const chatId = [auth.currentUser?.uid, receiverId].sort().join("_"); // Unique chat ID
 
@@ -68,7 +70,12 @@ export default function MessagesScreen() {
         >
             <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
                 {/* **Receiver's Username Header** */}
-                <View style={[styles.header, { backgroundColor: "#E89600", marginTop: 50 }]}>
+                <View style={styles.header}>
+                    <View>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                        <Text style={styles.backButtonText}>←</Text>
+                    </TouchableOpacity>
+                    </View>
                     <Text style={[styles.headerText, { color: theme === "light" ? "#fff" : "#000" }]}>
                         {receiverUsername}
                     </Text>
@@ -96,7 +103,7 @@ export default function MessagesScreen() {
                             {item.text}
                         </Text>
                     )}
-                    style={[styles.list, { marginTop: 20 }]} // **⬅ Top Margin Added Here**
+                    style={[styles.list, { marginTop: 40 }]} // Increased top margin
                 />
 
                 {/* **Input & Send Button** */}
@@ -126,19 +133,35 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     header: {
-        paddingVertical: 15,
+        flexDirection: 'row',
+        paddingVertical: 10, // Reduced padding for a thinner header
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: "space-between",
+        backgroundColor: "#E89600",
         borderRadius: 8,
         marginBottom: 10,
+        marginTop: 30
+    },
+    
+    backButton: {
+        paddingHorizontal: 10, // Sufficient padding for touch area
+        paddingVertical: 10
+    },
+    backButtonText: {
+        fontSize: 25,
+        color: '#fff',
     },
     headerText: {
+        position: 'absolute', // Position text absolutely
+        width: '100%', // Ensure it spans the full width
+        textAlign: 'center', // Center text horizontally
         fontSize: 20,
-        fontWeight: "bold",
+        fontWeight: "bold"
     },
     list: {
         flex: 1,
         marginBottom: 10,
+        marginTop: 40, // Increased from 20 to 40
     },
     message: {
         fontSize: 18,
@@ -156,13 +179,11 @@ const styles = StyleSheet.create({
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 0, // Reduced padding to make the container tighter
-        borderRadius: 10, // Rounded corners for the container
-        textDecorationLine: 'underline', // underline text
-        borderWidth: 0, // Add a border to the container
-        boxShadow: '0 0 2px rgba(0, 0, 0, 1)', // Add a shadow to the container
+        padding: 10,
+        borderRadius: 10,
+        borderWidth: 1,
         width: '100%', // Ensure the container takes the full width
-      },
+    },
     input: {
         flex: 1,
         padding: 10,
@@ -178,5 +199,6 @@ const styles = StyleSheet.create({
     },
     sendButtonText: {
         fontWeight: 'bold',
+        color: '#fff', // Text color for visibility
     },
 });
