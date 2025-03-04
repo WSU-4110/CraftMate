@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from "react-native";
-import { collection, query, onSnapshot } from "firebase/firestore";
+import { collection, query, onSnapshot, orderBy, limit } from "firebase/firestore";
 import { db, auth } from "../../constants/firebaseConfig";
 import { useRouter } from "expo-router";
 import { useColorScheme } from "react-native";
@@ -14,8 +14,15 @@ interface User {
   profileImage: string;
 }
 
+interface Message {
+  text: string;
+  senderId: string;
+  timestamp: any;
+}
+
 export default function ChatListScreen() {
   const [users, setUsers] = useState<User[]>([]);
+  const [recentMessages, setRecentMessages] = useState<{ [key: string]: string }>({});
   const router = useRouter();
   const theme = useColorScheme() || "light"; // Detect system theme
 
@@ -41,6 +48,29 @@ export default function ChatListScreen() {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    const unsubscribes: (() => void)[] = [];
+
+    users.forEach((user) => {
+      const chatId = [auth.currentUser?.uid, user.uid].sort().join("_");
+      const messagesRef = collection(db, "chats", chatId, "messages");
+      const q = query(messagesRef, orderBy("timestamp", "desc"), limit(1));
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        if (!snapshot.empty) {
+          const message = snapshot.docs[0].data() as Message;
+          setRecentMessages((prev) => ({ ...prev, [user.uid]: message.text }));
+        }
+      });
+
+      unsubscribes.push(unsubscribe);
+    });
+
+    return () => {
+      unsubscribes.forEach((unsubscribe) => unsubscribe());
+    };
+  }, [users]);
+
   const openChat = (receiverId: string) => {
     router.push({ pathname: "/(tabs)/messages", params: { receiverId } }); // Navigate to private chat
   };
@@ -61,16 +91,30 @@ export default function ChatListScreen() {
             ]}
             onPress={() => openChat(item.uid)}
           >
-            <Text
-              style={[
-                styles.username,
-                { 
-                  color: theme === "light" ? "#fff" : "#000", // White text in light mode, black in dark mode
-                }
-              ]}
-            >
-              {item.username || `${item.firstName} ${item.lastName}`}
-            </Text>
+            <View style={styles.userInfo}>
+              <Text
+                style={[
+                  styles.username,
+                  { 
+                    color: theme === "light" ? "#fff" : "#000", // White text in light mode, black in dark mode
+                    textAlign: "left",
+                  }
+                ]}
+              >
+                {item.username || `${item.firstName} ${item.lastName}`}
+              </Text>
+              <Text
+                style={[
+                  styles.recentMessage,
+                  { 
+                    color: theme === "light" ? "#fff" : "#000", // White text in light mode, black in dark mode
+                    textAlign: "left",
+                  }
+                ]}
+              >
+                {recentMessages[item.uid] || "No recent messages"}
+              </Text>
+            </View>
           </TouchableOpacity>
         )}
       />
@@ -94,10 +138,17 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 8,
     marginVertical: 5,
-    alignItems: "center",
+    alignItems: "flex-start",
+  },
+  userInfo: {
+    flexDirection: "column",
   },
   username: {
     fontSize: 18,
     fontWeight: "bold",
+  },
+  recentMessage: {
+    fontSize: 14,
+    marginTop: 5,
   },
 });
