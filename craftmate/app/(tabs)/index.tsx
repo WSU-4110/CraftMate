@@ -158,13 +158,11 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 0, // Reduced padding to make the container tighter
-    borderRadius: 10, // Rounded corners for the container
-    textDecorationLine: 'underline', // underline text
-    borderWidth: 0, // Add a border to the container
-    boxShadow: '0 0 2px rgba(0, 0, 0, 1)', // Add a shadow to the container
-    width: '95%', // Ensure the container takes the full width
-    marginBottom: 5, // Add some space below the input container
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    width: -20, // Ensure the container takes the full width
+    margin: 10, // Add some space below the input container
   },
   input: {
     flex: 1,
@@ -175,10 +173,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#E89600',
     paddingHorizontal: 30,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-  },
+},
   postButtonText: {
     fontWeight: 'bold',
   },

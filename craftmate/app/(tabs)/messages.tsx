@@ -73,10 +73,10 @@ export default function MessagesScreen() {
                 <View style={styles.header}>
                     <View>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Text style={styles.backButtonText}>←</Text>
+                        <Text style={[styles.backButtonText, { color: Colors[theme].text }]}>←</Text>
                     </TouchableOpacity>
                     </View>
-                    <Text style={[styles.headerText, { color: theme === "light" ? "#fff" : "#000" }]}>
+                    <Text style={[styles.headerText, { color: Colors[theme].text }]}>
                         {receiverUsername}
                     </Text>
                 </View>
@@ -137,7 +137,6 @@ const styles = StyleSheet.create({
         paddingVertical: 10, // Reduced padding for a thinner header
         alignItems: "center",
         justifyContent: "space-between",
-        backgroundColor: "#E89600",
         borderRadius: 8,
         marginBottom: 10,
         marginTop: 30
@@ -149,7 +148,6 @@ const styles = StyleSheet.create({
     },
     backButtonText: {
         fontSize: 25,
-        color: '#fff',
     },
     headerText: {
         position: 'absolute', // Position text absolutely
@@ -193,7 +191,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#E89600',
         paddingHorizontal: 30,
         paddingVertical: 10,
-        borderRadius: 10,
+        borderRadius: 8,
         justifyContent: 'center',
         alignItems: 'center',
     },
