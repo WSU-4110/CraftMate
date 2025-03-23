@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { auth, db } from "../constants/firebaseConfig";
-import { useColorScheme } from 'react-native';
-import { Colors } from '../constants/Colors';
+import { useColorScheme } from "react-native";
+import { Colors } from "../constants/Colors";
 import styles from "./SignUpScreen.styles";
 
 export default function SignUpScreen() {
@@ -15,7 +15,8 @@ export default function SignUpScreen() {
   const [username, setUsername] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const theme = useColorScheme() || 'light'; // Provide a default theme
+  const theme = useColorScheme() || "light"; // Provide a default theme
+  const router = useRouter(); // Initialize router
 
   const handleSignUp = async () => {
     // Validate all fields
@@ -40,7 +41,7 @@ export default function SignUpScreen() {
       const user = userCredential.user;
 
       // Step 2: Create a user document in Firestore
-      const userRef = doc(db, 'users', user.uid); // Use UID as the document ID
+      const userRef = doc(db, "users", user.uid); // Use UID as the document ID
       await setDoc(userRef, {
         email: user.email,
         uid: user.uid,
@@ -54,6 +55,9 @@ export default function SignUpScreen() {
       });
 
       Alert.alert("Success", `Welcome, ${username}!`);
+
+      // Step 3: Navigate to home page after sign-up
+      router.push("/(tabs)"); // Home page (tab layout)
     } catch (error: any) {
       Alert.alert("Sign Up Failed", error.message);
     }
