@@ -46,6 +46,27 @@ const styles = StyleSheet.create({
     color: "#E89600", // Match CraftMate's orange
     fontWeight: "bold",
   },
+  // ** Radio Button Styles **
+  radioContainer: {
+    marginVertical: 15,
+  },
+  radioText: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  radioButtons: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+  },
+  radioOption: {
+    fontSize: 16,
+    fontWeight: "normal",
+    marginVertical: 5,
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E89600",
+  },
 });
 
 export default styles;
