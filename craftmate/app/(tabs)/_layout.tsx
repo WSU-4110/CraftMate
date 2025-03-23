@@ -49,7 +49,14 @@ export default function TabLayout() {
             tabBarIcon: ({ color }) => <IconSymbol size={32} name="person.crop.circle.fill" color={color} />,
           }}
         />
-        
+        {/* Login Screen */}
+        <Tabs.Screen
+          name="video"
+          options={{
+          tabBarIcon: ({ color }) => <IconSymbol size={32} name="video.fill" color={color} />,
+  }}
+/>
+
 
         {/* Stack Navigation for Private Messages */}
         <Tabs.Screen
