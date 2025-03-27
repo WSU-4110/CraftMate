@@ -4,8 +4,8 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { Link, useRouter } from "expo-router";
 import { auth, db } from "../constants/firebaseConfig";
-import { useColorScheme } from "react-native";
-import { Colors } from "../constants/Colors";
+import { useColorScheme } from 'react-native';
+import { Colors } from '../constants/Colors';
 import styles from "./SignUpScreen.styles";
 
 export default function SignUpScreen() {
@@ -15,11 +15,11 @@ export default function SignUpScreen() {
   const [username, setUsername] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const theme = useColorScheme() || "light"; // Provide a default theme
-  const router = useRouter(); // Initialize router
+  const [isProfessional, setIsProfessional] = useState(true);
+  const theme = useColorScheme() || 'light';
+  const router = useRouter(); // ✅ Add router
 
   const handleSignUp = async () => {
-    // Validate all fields
     if (!username || !firstName || !lastName || !email || !password || !confirmPassword) {
       Alert.alert("Error", "All fields are required!");
       return;
@@ -36,28 +36,27 @@ export default function SignUpScreen() {
     }
 
     try {
-      // Step 1: Create user in Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Step 2: Create a user document in Firestore
-      const userRef = doc(db, "users", user.uid); // Use UID as the document ID
+      const userRef = doc(db, 'users', user.uid);
       await setDoc(userRef, {
         email: user.email,
         uid: user.uid,
         username,
         firstName,
         lastName,
-        profileImage: "https://via.placeholder.com/150", // Default profile image
+        profileImage: "https://via.placeholder.com/150",
         createdAt: new Date().toISOString(),
-        followers: [], // Initialize empty followers array
-        following: [], // Initialize empty following array
+        followers: [],
+        following: [],
+        isProfessional,
       });
 
       Alert.alert("Success", `Welcome, ${username}!`);
 
-      // Step 3: Navigate to home page after sign-up
-      router.push("/(tabs)"); // Home page (tab layout)
+      // ✅ Navigate to home after sign up
+      router.replace("/(tabs)");
     } catch (error: any) {
       Alert.alert("Sign Up Failed", error.message);
     }
@@ -66,7 +65,7 @@ export default function SignUpScreen() {
   return (
     <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
       <Text style={styles.title}>Create an Account</Text>
-      {/* Username */}
+
       <TextInput
         style={[styles.input, { color: Colors[theme].text }]}
         placeholder="Username"
@@ -74,8 +73,6 @@ export default function SignUpScreen() {
         value={username}
         onChangeText={setUsername}
       />
-
-      {/* First Name */}
       <TextInput
         style={[styles.input, { color: Colors[theme].text }]}
         placeholder="First Name"
@@ -83,8 +80,6 @@ export default function SignUpScreen() {
         value={firstName}
         onChangeText={setFirstName}
       />
-
-      {/* Last Name */}
       <TextInput
         style={[styles.input, { color: Colors[theme].text }]}
         placeholder="Last Name"
@@ -92,8 +87,6 @@ export default function SignUpScreen() {
         value={lastName}
         onChangeText={setLastName}
       />
-
-      {/* Email */}
       <TextInput
         style={[styles.input, { color: Colors[theme].text }]}
         placeholder="Email"
@@ -103,8 +96,6 @@ export default function SignUpScreen() {
         keyboardType="email-address"
         autoCapitalize="none"
       />
-
-      {/* Password */}
       <TextInput
         style={[styles.input, { color: Colors[theme].text }]}
         placeholder="Password"
@@ -113,8 +104,6 @@ export default function SignUpScreen() {
         onChangeText={setPassword}
         secureTextEntry
       />
-
-      {/* Confirm Password */}
       <TextInput
         style={[styles.input, { color: Colors[theme].text }]}
         placeholder="Confirm Password"
@@ -124,12 +113,34 @@ export default function SignUpScreen() {
         secureTextEntry
       />
 
-      {/* Sign Up Button */}
+      <View style={styles.radioContainer}>
+        <Text style={[styles.radioText, { color: Colors[theme].text }]}>Select your role:</Text>
+        <View style={styles.radioButtons}>
+          <TouchableOpacity
+            style={[
+              styles.radioOption,
+              isProfessional ? { backgroundColor: "#E89600" } : {}
+            ]}
+            onPress={() => setIsProfessional(true)}
+          >
+            <Text style={{ color: isProfessional ? "#fff" : Colors[theme].text }}>Professional</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.radioOption,
+              !isProfessional ? { backgroundColor: "#E89600" } : {}
+            ]}
+            onPress={() => setIsProfessional(false)}
+          >
+            <Text style={{ color: !isProfessional ? "#fff" : Colors[theme].text }}>Enthusiast</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <TouchableOpacity style={styles.button} onPress={handleSignUp}>
         <Text style={[styles.buttonText, { color: Colors[theme].background }]}>Sign Up</Text>
       </TouchableOpacity>
 
-      {/* Footer */}
       <View style={styles.footer}>
         <Text style={[styles.footerText, { color: Colors[theme].text }]}>
           Already have an account?{" "}
