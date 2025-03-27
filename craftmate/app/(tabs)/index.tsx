@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Dimensions,Platform, TextInput, KeyboardAvoidingView } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Dimensions, KeyboardAvoidingView, TextInput, Platform } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { Colors } from '../../constants/Colors';
-import { collection, addDoc, query, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../constants/firebaseConfig';
 import { getAuth } from 'firebase/auth';
+import { useRouter } from 'expo-router'; // Import useRouter
 
 interface Post {
   id: string;
@@ -12,33 +13,14 @@ interface Post {
   content: string;
   timestamp: string;
   likes: number;
-  comments: string[];
-  profileImage: string; // Use string type for profileImage
+  profileImage: string;
 }
 
-const PostItem: React.FC<Post> = ({ username, content, timestamp, likes, comments, profileImage, theme }) => {
-  const [imageError, setImageError] = useState(false);
-
-  return (
-    <View style={[styles.postContainer, { backgroundColor: Colors[theme].postBackground }]}>
-      <Image
-        source={imageError ? require('../../assets/images/blank-profile.jpeg') : { uri: profileImage }}
-        style={styles.profileImage}
-        onError={() => setImageError(true)}
-      />
-      <View style={styles.postContentContainer}>
-        <Text style={[styles.postTitle, { color: Colors[theme].text }]}>{username}</Text>
-        <Text style={[styles.postContent, { color: Colors[theme].postText }]}>{content}</Text>
-        <Text style={[styles.postTimestamp, { color: Colors[theme].postText }]}>{new Date(timestamp).toLocaleString()}</Text>
-      </View>
-    </View>
-  );
-};
-
-const App = () => {
-  const theme = useColorScheme() || 'light'; // Provide a default theme
+const HomeScreen = () => {
+  const theme = useColorScheme() || 'light';
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPostContent, setNewPostContent] = useState('');
+  const router = useRouter(); // Initialize router
 
   useEffect(() => {
     const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
@@ -75,55 +57,61 @@ const App = () => {
 
     if (newPostContent.trim()) {
       await addDoc(collection(db, 'posts'), {
-        username, // Use the username from the Firestore user document
+        username,
         content: newPostContent,
         timestamp: new Date().toISOString(),
         likes: 0,
-        comments: [],
-        profileImage: user.photoURL || require('../../assets/images/blank-profile.jpeg'), // Use user's profile image or a placeholder
-        userId: user.uid, // Store the user ID to link the post to the user
+        profileImage: user.photoURL || require('../../assets/images/blank-profile.jpeg'),
+        userId: user.uid,
       });
       setNewPostContent('');
     }
   };
 
   const renderItem = ({ item }: { item: Post }) => (
-    <TouchableOpacity>
-      <PostItem {...item} theme={theme} />
+    <TouchableOpacity onPress={() => router.push(`/post/${item.id}`)}> {/* Use router.push */}
+      <View style={[styles.postContainer, { backgroundColor: Colors[theme].tint }]}>
+        <Image source={{ uri: item.profileImage }} style={styles.profileImage} />
+        <View style={styles.postContentContainer}>
+          <Text style={[styles.postTitle, { color: Colors[theme].text }]}>{item.username}</Text>
+          <Text style={[styles.postContent, { color: Colors[theme].postText }]}>{item.content}</Text>
+          <Text style={[styles.postTimestamp, { color: Colors[theme].postText }]}>{new Date(item.timestamp).toLocaleString()}</Text>
+        </View>
+      </View>
     </TouchableOpacity>
   );
 
   return (
-
-    <KeyboardAvoidingView 
-    style={{ flex: 1 }} 
-    behavior={Platform.OS === "ios" ? "padding" : "height"} 
-    keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
-    <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
-      <Image source={require('../../assets/images/craftmate-logo.png')} style={styles.logo} />
-      <FlatList
-        data={posts}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-      />
-      <View style={[styles.inputContainer, { backgroundColor: Colors[theme].background, borderColor: Colors[theme].text }]}>
-        <TextInput
-          placeholderTextColor={Colors[theme].icon}
-          style={[styles.input, { borderColor: Colors[theme].text, color: Colors[theme].text }]} // Add color property here
-          value={newPostContent}
-          onChangeText={setNewPostContent}
-          placeholder="Write a new post..."
+      <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
+        <Image source={require('../../assets/images/craftmate-logo.png')} style={styles.logo} />
+        <FlatList
+          data={posts}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          horizontal={false}
         />
-        <TouchableOpacity
-          style={[styles.postButton]}
-          onPress={handleAddPost}
-        >
-          <Text style={[styles.postButtonText, { color: Colors[theme].background }]}>Post</Text>
-        </TouchableOpacity>
+        <View style={[styles.inputContainer, { backgroundColor: Colors[theme].background, borderColor: Colors[theme].text }]}>
+          <TextInput
+            placeholderTextColor={Colors[theme].icon}
+            style={[styles.input, { borderColor: Colors[theme].text, color: Colors[theme].text }]}
+            value={newPostContent}
+            onChangeText={setNewPostContent}
+            placeholder="Write a new post..."
+          />
+          <TouchableOpacity
+            style={[styles.postButton]}
+            onPress={handleAddPost}
+          >
+            <Text style={[styles.postButtonText, { color: Colors[theme].background }]}>Post</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
     </KeyboardAvoidingView>
   );
 };
@@ -131,7 +119,7 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 10,
+    padding: 20,
     alignItems: 'center', // Center the logo horizontally
   },
   logo: {
@@ -176,13 +164,10 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 0, // Reduced padding to make the container tighter
-    borderRadius: 10, // Rounded corners for the container
-    textDecorationLine: 'underline', // underline text
-    borderWidth: 0, // Add a border to the container
-    boxShadow: '0 0 2px rgba(0, 0, 0, 1)', // Add a shadow to the container
-    width: '95%', // Ensure the container takes the full width
-    marginBottom: 5, // Add some space below the input container
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    width: '100%', // Ensure the container takes the full width
   },
   input: {
     flex: 1,
@@ -193,13 +178,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#E89600',
     paddingHorizontal: 30,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-  },
+},
   postButtonText: {
     fontWeight: 'bold',
   },
 });
 
-export default App;
+export default HomeScreen;
