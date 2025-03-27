@@ -20,7 +20,8 @@ const HomeScreen = () => {
   const theme = useColorScheme() || 'light';
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPostContent, setNewPostContent] = useState('');
-  const router = useRouter(); // Initialize router
+  const [searchQuery, setSearchQuery] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
     const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
@@ -69,7 +70,7 @@ const HomeScreen = () => {
   };
 
   const renderItem = ({ item }: { item: Post }) => (
-    <TouchableOpacity onPress={() => router.push(`/post/${item.id}`)}> {/* Use router.push */}
+    <TouchableOpacity onPress={() => router.push(`/post/${item.id}`)}>
       <View style={[styles.postContainer, { backgroundColor: Colors[theme].tint }]}>
         <Image source={{ uri: item.profileImage }} style={styles.profileImage} />
         <View style={styles.postContentContainer}>
@@ -89,13 +90,26 @@ const HomeScreen = () => {
     >
       <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
         <Image source={require('../../assets/images/craftmate-logo.png')} style={styles.logo} />
+
+        <TextInput
+          placeholder="Search posts..."
+          placeholderTextColor={Colors[theme].icon}
+          style={[styles.searchInput, { borderColor: Colors[theme].text, color: Colors[theme].text }]}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+
         <FlatList
-          data={posts}
+          data={posts.filter((post) =>
+            post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            post.username.toLowerCase().includes(searchQuery.toLowerCase())
+          )}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           horizontal={false}
         />
+
         <View style={[styles.inputContainer, { backgroundColor: Colors[theme].background, borderColor: Colors[theme].text }]}>
           <TextInput
             placeholderTextColor={Colors[theme].icon}
@@ -104,10 +118,7 @@ const HomeScreen = () => {
             onChangeText={setNewPostContent}
             placeholder="Write a new post..."
           />
-          <TouchableOpacity
-            style={[styles.postButton]}
-            onPress={handleAddPost}
-          >
+          <TouchableOpacity style={[styles.postButton]} onPress={handleAddPost}>
             <Text style={[styles.postButtonText, { color: Colors[theme].background }]}>Post</Text>
           </TouchableOpacity>
         </View>
@@ -120,34 +131,41 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    alignItems: 'center', // Center the logo horizontally
+    alignItems: 'center',
   },
   logo: {
-    width: 200, // Adjust the width as needed
-    height: 100, // Adjust the height as needed
-    paddingTop: 50, // Add some space below the logo
-    marginBottom: 20, // Add some space below the logo
+    width: 200,
+    height: 100,
+    paddingTop: 50,
+    marginBottom: 20,
+  },
+  searchInput: {
+    width: '100%',
+    padding: 10,
+    borderWidth: 1,
+    borderRadius: 10,
+    marginBottom: 15,
   },
   listContent: {
-    paddingBottom: 20, // Add some padding at the bottom of the list
-    width: Dimensions.get('window').width - 20, // Ensure the list content takes the full width minus padding
+    paddingBottom: 20,
+    width: Dimensions.get('window').width - 20,
   },
   postContainer: {
-    flexDirection: 'row', // Arrange profile image and content side by side
+    flexDirection: 'row',
     padding: 15,
     marginVertical: 8,
     borderRadius: 20,
     elevation: 3,
-    width: '100%', // Make sure the posts take the full width
+    width: '100%',
   },
   profileImage: {
-    width: 50, // Adjust the width as needed
-    height: 50, // Adjust the height as needed
-    borderRadius: 25, // Make the image circular
-    marginRight: 15, // Add some space between the image and the content
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 15,
   },
   postContentContainer: {
-    flex: 1, // Take up the remaining space
+    flex: 1,
   },
   postTitle: {
     fontSize: 18,
@@ -167,7 +185,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     borderWidth: 1,
-    width: '100%', // Ensure the container takes the full width
+    width: '100%',
   },
   input: {
     flex: 1,
@@ -181,7 +199,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-},
+  },
   postButtonText: {
     fontWeight: 'bold',
   },
