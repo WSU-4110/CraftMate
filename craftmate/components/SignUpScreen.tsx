@@ -16,7 +16,7 @@ export default function SignUpScreen() {
   const [username, setUsername] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [isProfessional, setIsProfessional] = useState(false); // false by default
+  const [isProfessional, setIsProfessional] = useState(false); // false by defaut
   const theme = useColorScheme() || 'light'; // fallback to light theme
   const router = useRouter(); // used to navigate
 
