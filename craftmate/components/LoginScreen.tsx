@@ -113,14 +113,36 @@ export default function LoginScreen() {
   };
 
   const handlePickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
-    if (!result.canceled) {
-      await updateProfile({ profileImage: result.assets[0].uri });
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+        base64: true, // ✅ Required to get base64 string
+      });
+  
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        Toast.show({ type: "info", text1: "No image selected" });
+        return;
+      }
+  
+      const base64String = result.assets[0].base64;
+      if (!base64String) {
+        throw new Error("Failed to get base64 from selected image.");
+      }
+  
+      const base64ImageUri = `data:image/jpeg;base64,${base64String}`;
+      await updateProfile({ profileImage: base64ImageUri });
+  
+      Toast.show({ type: "success", text1: "Profile image updated!" });
+    } catch (error: any) {
+      console.error("Image update failed:", error);
+      Toast.show({
+        type: "error",
+        text1: "Upload Failed",
+        text2: error.message || "Unknown error occurred",
+      });
     }
   };
 
