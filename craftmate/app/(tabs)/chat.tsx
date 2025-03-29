@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { collection, query, onSnapshot, orderBy, limit } from "firebase/firestore";
 import { db, auth } from "../../constants/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth"; // Import onAuthStateChanged
@@ -130,28 +130,34 @@ export default function ChatListScreen() {
             onPress={() => openChat(item.uid)}
           >
             <View style={styles.userInfo}>
-              <Text
-                style={[
-                  styles.username,
-                  { 
-                    color: theme === "light" ? "#fff" : "#000", // White text in light mode, black in dark mode
-                    textAlign: "left",
-                  }
-                ]}
-              >
-                {item.username || `${item.firstName} ${item.lastName}`}
-              </Text>
-              <Text
-                style={[
-                  styles.recentMessage,
-                  { 
-                    color: theme === "light" ? "#fff" : "#000", // White text in light mode, black in dark mode
-                    textAlign: "left",
-                  }
-                ]}
-              >
-                {recentMessages[item.uid] || "No recent messages"}
-              </Text>
+              <Image
+                source={{ uri: item.profileImage }}
+                style={styles.profileImage}
+              />
+              <View>
+                <Text
+                  style={[
+                    styles.username,
+                    { 
+                      color: theme === "light" ? "#fff" : "#000", // White text in light mode, black in dark mode
+                      textAlign: "left",
+                    }
+                  ]}
+                >
+                  {item.username || `${item.firstName} ${item.lastName}`}
+                </Text>
+                <Text
+                  style={[
+                    styles.recentMessage,
+                    { 
+                      color: theme === "light" ? "#fff" : "#000", // White text in light mode, black in dark mode
+                      textAlign: "left",
+                    }
+                  ]}
+                >
+                  {recentMessages[item.uid] || "No recent messages"}
+                </Text>
+              </View>
             </View>
           </TouchableOpacity>
         )}
@@ -173,13 +179,21 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   userItem: {
+    flexDirection: "row", // Align profile image and text horizontally
     padding: 15,
     borderRadius: 8,
     marginVertical: 5,
-    alignItems: "flex-start",
+    alignItems: "center", // Center items vertically
   },
   userInfo: {
-    flexDirection: "column",
+    flexDirection: "row", // Align profile image and text horizontally
+    alignItems: "center",
+  },
+  profileImage: {
+    width: 50, // Set the width of the profile image
+    height: 50, // Set the height of the profile image
+    borderRadius: 25, // Make the image circular
+    marginRight: 15, // Add spacing between the image and the text
   },
   username: {
     fontSize: 18,
