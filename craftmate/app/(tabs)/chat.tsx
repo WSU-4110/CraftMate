@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from "react-native";
 import { collection, query, onSnapshot, orderBy, limit } from "firebase/firestore";
 import { db, auth } from "../../constants/firebaseConfig";
+import { onAuthStateChanged } from "firebase/auth"; // Import onAuthStateChanged
 import { useRouter } from "expo-router";
 import { useColorScheme } from "react-native";
 import { Colors } from "../../constants/Colors";
@@ -23,10 +24,22 @@ interface Message {
 export default function ChatListScreen() {
   const [users, setUsers] = useState<User[]>([]);
   const [recentMessages, setRecentMessages] = useState<{ [key: string]: string }>({});
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // Track login state
   const router = useRouter();
   const theme = useColorScheme() || "light"; // Detect system theme
 
+  // Listen for authentication state changes
   useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsLoggedIn(!!user); // Set login state based on user presence
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!auth.currentUser) return; // Exit if no user is logged in
+
     const q = query(collection(db, "users"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const usersList: User[] = snapshot.docs
@@ -46,9 +59,11 @@ export default function ChatListScreen() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [isLoggedIn]); // Re-run when login state changes
 
   useEffect(() => {
+    if (!auth.currentUser) return; // Exit if no user is logged in
+
     const unsubscribes: (() => void)[] = [];
 
     users.forEach((user) => {
@@ -75,9 +90,32 @@ export default function ChatListScreen() {
     router.push({ pathname: "/(tabs)/messages", params: { receiverId } }); // Navigate to private chat
   };
 
+  if (!isLoggedIn) {
+    // If no user is logged in, show a message or render nothing
+    return (
+      <View style={[styles.container, { backgroundColor: Colors[theme].background, justifyContent: "center", alignItems: "center" }]}>
+        <Text style={[styles.header, { color: Colors[theme].text, textAlign: "center", marginBottom: 20 }]}>
+          Log in to view your messages.
+        </Text>
+        <TouchableOpacity
+          style={{
+            backgroundColor: theme === "light" ? "#E89600" : "#E89600", // Orange in both modes
+            padding: 10,
+            borderRadius: 8,
+          }}
+          onPress={() => router.push("/login")} // Navigate to the login page
+        >
+          <Text style={{ color: "#fff", fontWeight: "bold", textAlign: "center" }}>
+            Go to Login
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
-      <Text style={[styles.header, { color: Colors[theme].text }]}>Select a User to Chat</Text>
+      <Text style={[styles.header, { color: Colors[theme].text }]}>Messages</Text>
       <FlatList
         data={users}
         keyExtractor={(item) => item.uid}
