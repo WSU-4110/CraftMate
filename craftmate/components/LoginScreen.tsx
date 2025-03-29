@@ -58,7 +58,10 @@ export default function LoginScreen() {
     const userSnap = await getDoc(userRef);
     if (userSnap.exists()) {
       const data = userSnap.data() as any;
-      setProfile(data);
+      setProfile({
+        ...data,
+        tags: data.tags || [], // Ensure tags is always an array
+      });
       setBioText(data.bio || "");
     }
   };
@@ -123,9 +126,9 @@ export default function LoginScreen() {
 
   const toggleTag = async (tag: string) => {
     if (!user) return;
-    const tags = profile.tags.includes(tag)
-      ? profile.tags.filter((t) => t !== tag)
-      : [...profile.tags, tag];
+    const tags = (profile.tags || []).includes(tag)
+      ? (profile.tags || []).filter((t) => t !== tag)
+      : [...(profile.tags || []), tag];
     await updateProfile({ tags });
   };
 
@@ -133,8 +136,8 @@ export default function LoginScreen() {
     Alert.prompt("New Tag", "Enter custom tag", async (tag) => {
       if (!tag) return;
       const trimmed = tag.trim();
-      if (!trimmed || profile.tags.includes(trimmed)) return;
-      await updateProfile({ tags: [...profile.tags, trimmed] });
+      if (!trimmed || (profile.tags || []).includes(trimmed)) return;
+      await updateProfile({ tags: [...(profile.tags || []), trimmed] });
     });
   };
 
@@ -218,8 +221,11 @@ export default function LoginScreen() {
 </Text>
 <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
   {[
-    ...new Set([...PRESET_TAGS, ...profile.tags.filter(t => !PRESET_TAGS.includes(t))]),
-    "+"
+    ...new Set([
+      ...PRESET_TAGS,
+      ...(profile.tags || []).filter((t) => !PRESET_TAGS.includes(t)),
+    ]),
+    "+",
   ].map((tag) => (
     <TouchableOpacity
       key={tag}
@@ -228,7 +234,7 @@ export default function LoginScreen() {
         backgroundColor:
           tag === "+"
             ? Colors[theme].inputBackground
-            : profile.tags.includes(tag)
+            : (profile.tags || []).includes(tag)
             ? "#E89600"
             : Colors[theme].inputBackground,
         paddingVertical: 8,
@@ -244,7 +250,7 @@ export default function LoginScreen() {
           color:
             tag === "+"
               ? "#aaa"
-              : profile.tags.includes(tag)
+              : (profile.tags || []).includes(tag)
               ? "#fff"
               : textColor,
         }}
