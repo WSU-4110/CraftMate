@@ -151,7 +151,7 @@ interface Observer {
   import { View, Text, FlatList, TouchableOpacity, Image, TextInput } from 'react-native';
   import { useColorScheme } from 'react-native';
   import { Colors } from '../../constants/Colors';
-  import { collection, query, orderBy, onSnapshot, addDoc, doc, getDoc } from 'firebase/firestore';
+  import { collection, query, orderBy, onSnapshot, addDoc, doc, getDoc, updateDoc, increment } from 'firebase/firestore';
   import { db } from '../../constants/firebaseConfig';
   import { getAuth } from 'firebase/auth';
   import { useLocalSearchParams } from 'expo-router';
@@ -247,13 +247,26 @@ interface Observer {
       const username = userData?.username || 'Anonymous';
   
       if (newComment.trim()) {
-        await firebaseService.addComment(id as string, {
-          username,
-          content: newComment,
-          timestamp: new Date().toISOString(),
-          profileImage: user.photoURL || require('../../assets/images/blank-profile.jpeg'),
-        });
-        setNewComment('');
+        try {
+          // Add the comment to the "comments" subcollection
+          await firebaseService.addComment(id as string, {
+            username,
+            content: newComment,
+            timestamp: new Date().toISOString(),
+            profileImage: user.photoURL || require('../../assets/images/blank-profile.jpeg'),
+          });
+    
+          // Increment the comments count in the parent post document
+          const postRef = doc(db, 'posts', id as string);
+          await updateDoc(postRef, {
+            comments: increment(1), // Increment the comments field by 1
+          });
+    
+          console.log('Comment added successfully!');
+          setNewComment(''); // Clear the input field
+        } catch (error) {
+          console.error('Error adding comment:', error);
+        }
       }
     };
   

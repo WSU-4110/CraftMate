@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Dimensions, KeyboardAvoidingView, TextInput, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
 import { Colors } from '../../constants/Colors';
-import { collection, query, orderBy, onSnapshot, addDoc, doc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, doc, getDoc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../../constants/firebaseConfig';
 import { getAuth } from 'firebase/auth';
 import { useRouter } from 'expo-router'; // Import useRouter
@@ -14,10 +15,11 @@ interface Post {
   timestamp: string;
   likes: number;
   profileImage: string;
+  comments: number; 
 }
 
 const HomeScreen = () => {
-  const theme = useColorScheme() || 'light';
+  const theme: 'light' | 'dark' = useColorScheme() || 'light';
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPostContent, setNewPostContent] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -41,42 +43,116 @@ const HomeScreen = () => {
     const user = auth.currentUser;
 
     if (!user) {
-      alert('You must be logged in to post.');
+      alert("You must be logged in to post.");
       return;
     }
 
-    const userDocRef = doc(db, 'users', user.uid);
+    const userDocRef = doc(db, "users", user.uid);
     const userDoc = await getDoc(userDocRef);
 
     if (!userDoc.exists()) {
-      alert('User document does not exist.');
+      alert("User document does not exist.");
       return;
     }
 
     const userData = userDoc.data();
-    const username = userData?.username || 'Anonymous';
+    const username = userData?.username || "Anonymous";
 
     if (newPostContent.trim()) {
-      await addDoc(collection(db, 'posts'), {
+      await addDoc(collection(db, "posts"), {
         username,
         content: newPostContent,
         timestamp: new Date().toISOString(),
         likes: 0,
-        profileImage: user.photoURL || require('../../assets/images/blank-profile.jpeg'),
+        profileImage: userData?.profileImage || "https://via.placeholder.com/150", // Use user's profile image or a placeholder
         userId: user.uid,
       });
-      setNewPostContent('');
+      setNewPostContent("");
+    }
+  };
+
+  const handleLikePost = async (postId: string) => {
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+
+      if (!user) {
+        alert("You must be logged in to like a post.");
+        return;
+      }
+
+      const postRef = doc(db, "posts", postId);
+      const postDoc = await getDoc(postRef);
+
+      if (!postDoc.exists()) {
+        console.error("Post does not exist.");
+        return;
+      }
+
+      const postData = postDoc.data();
+      const likedBy = postData?.likedBy || [];
+
+      // Check if the user has already liked the post
+      if (likedBy.includes(user.uid)) {
+        alert("You have already liked this post.");
+        return;
+      }
+
+      // Update the post: increment likes and add user ID to likedBy array
+      await updateDoc(postRef, {
+        likes: increment(1),
+        likedBy: [...likedBy, user.uid], // Add the user's ID to the likedBy array
+      });
+
+      console.log("Post liked successfully!");
+    } catch (error) {
+      console.error("Error liking post:", error);
     }
   };
 
   const renderItem = ({ item }: { item: Post }) => (
     <TouchableOpacity onPress={() => router.push(`/post/${item.id}`)}>
-      <View style={[styles.postContainer, { backgroundColor: Colors[theme].tint }]}>
-        <Image source={{ uri: item.profileImage }} style={styles.profileImage} />
-        <View style={styles.postContentContainer}>
-          <Text style={[styles.postTitle, { color: Colors[theme].text }]}>{item.username}</Text>
-          <Text style={[styles.postContent, { color: Colors[theme].postText }]}>{item.content}</Text>
-          <Text style={[styles.postTimestamp, { color: Colors[theme].postText }]}>{new Date(item.timestamp).toLocaleString()}</Text>
+      <View style={[styles.postContainer, { backgroundColor: Colors[theme].card }]}>
+        <View style={styles.postHeader}>
+          <View style={styles.postHeaderLeft}>
+            <Image
+              source={{ uri: item.profileImage || "https://via.placeholder.com/150" }}
+              style={styles.profileImage}
+            />
+            <Text style={[styles.postUsername, { color: Colors[theme].text }]}>
+              {item.username}
+            </Text>
+          </View>
+          <Text style={[styles.postTimestamp, { color: Colors[theme].subtext }]}>
+            {new Date(item.timestamp).toLocaleString()}
+          </Text>
+        </View>
+        <Text style={[styles.postContent, { color: Colors[theme].postText }]}>
+          {item.content}
+        </Text>
+        <View style={styles.postFooter}>
+          <View style={styles.postActions}>
+            {/* Like Button */}
+            <TouchableOpacity
+              style={[styles.actionButton, styles.ovalContainer, { backgroundColor: Colors[theme].background }]}
+              onPress={() => handleLikePost(item.id)}
+            >
+              <Ionicons name="thumbs-up-outline" size={16} color={Colors[theme].icon} />
+              <Text style={[styles.ovalText, { color: Colors[theme].icon }]}>
+                {item.likes}
+              </Text>
+            </TouchableOpacity>
+            {/* Comment Button */}
+            <TouchableOpacity
+              style={[styles.actionButton, styles.ovalContainer, { backgroundColor: Colors[theme].background }]}
+              onPress={() => router.push(`/post/${item.id}`)} // Navigate to the post page
+            >
+              <Ionicons name="chatbubble-outline" size={16} color={Colors[theme].icon} />
+              <Text style={[styles.ovalText, { color: Colors[theme].icon }]}>
+                {item.comments || 0}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </TouchableOpacity>
@@ -130,7 +206,7 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    padding: 20, // 20 padding on both sides
     alignItems: 'center',
   },
   logo: {
@@ -148,36 +224,63 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 20,
-    width: Dimensions.get('window').width - 20,
+    width: '100%', // Ensure the list content fits the parent container
   },
   postContainer: {
-    flexDirection: 'row',
+    width: Dimensions.get('window').width - 40, // Subtract the 20 padding on both sides
     padding: 15,
     marginVertical: 8,
-    borderRadius: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
     elevation: 3,
-    width: '100%',
+    alignSelf: 'center', // Center the container horizontally
+  },
+  postHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  postHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   profileImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 15,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    marginRight: 10,
   },
-  postContentContainer: {
-    flex: 1,
-  },
-  postTitle: {
-    fontSize: 18,
+  postUsername: {
+    fontSize: 14,
     fontWeight: 'bold',
-    marginBottom: 5,
   },
   postContent: {
-    fontSize: 14,
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  postFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    paddingTop: 8,
   },
   postTimestamp: {
     fontSize: 12,
-    marginTop: 5,
+    color: '#888',
+  },
+  postActions: {
+    flexDirection: 'row',
+  },
+  actionButton: {
+    marginLeft: 10,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -201,6 +304,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   postButtonText: {
+    fontWeight: 'bold',
+  },
+  ovalContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12, // Horizontal padding for the oval shape
+    paddingVertical: 6, // Vertical padding for the oval shape
+    borderRadius: 20, // Makes the container oval
+    marginLeft: 10, // Space between buttons
+  },
+  ovalText: {
+    marginLeft: 5, // Space between the icon and text
+    fontSize: 14,
     fontWeight: 'bold',
   },
 });
