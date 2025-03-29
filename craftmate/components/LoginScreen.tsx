@@ -88,6 +88,8 @@ export default function LoginScreen() {
         password
       );
       const user = userCredential.user;
+      const userRef = doc(db, "users", user.uid);
+      await updateDoc(userRef, { isActive: true });
       Toast.show({
         type: "success",
         text1: "Welcome",
@@ -101,6 +103,9 @@ export default function LoginScreen() {
   };
 
   const handleSignOut = async () => {
+    if (!user) return;
+    const userRef = doc(db, "users", user.uid);
+    await updateDoc(userRef, { isActive: false });
     await signOut(auth);
     setUser(null);
     setProfile({ name: "", bio: "", profileImage: "", tags: [] });
