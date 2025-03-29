@@ -1,159 +1,180 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Button, StyleSheet, useColorScheme } from 'react-native';
-import { Colors } from '../../constants/Colors';
+import React, { useState, useEffect } from "react";
+import { View, Text, TextInput, Image, FlatList, TouchableOpacity, ScrollView, Button, Platform } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useColorScheme } from "react-native";
 import { auth, db } from "../../constants/firebaseConfig";
-import { RTCView } from 'react-native-webrtc';
-import { FirebaseApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, doc, setDoc, onSnapshot } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { Colors } from "../../constants/Colors";
+import styles from "../../components/VideoScreen.styles";
+import DateTimePicker from "@react-native-community/datetimepicker"; // Date picker for iOS
+
+const categories = [
+  { id: "1", name: "All", icon: "expand-all", color: "red" },
+  { id: "2", name: "Vehicle", icon: "car", color: "orange" },
+  { id: "3", name: "Home", icon: "home", color: "yellow" },
+  { id: "4", name: "Arts", icon: "design-services", color: "blue" },
+];
 
 export default function VideoScreen() {
-  const colorScheme = useColorScheme();
-  const [callStatus, setCallStatus] = useState('Waiting for user...');
-  const [localStream, setLocalStream] = useState(null);
-  const [remoteStream, setRemoteStream] = useState(null);
-  const [callerUser, setCallerUser] = useState(null);
-  const [calleeUser, setCalleeUser] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedProfessional, setSelectedProfessional] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedTime, setSelectedTime] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [dateTimeSet, setDateTimeSet] = useState(false);
+  const theme = useColorScheme() || "light";
 
   useEffect(() => {
-    const user = auth.currentUser;
-    if (user) {
-      // Set up user ID for both caller and callee (Firebase logic will fill in)
-      setCallerUser(user.uid); // Caller is the currently authenticated user
-    }
+    const fetchActiveProfessionals = async () => {
+      try {
+        const q = query(collection(db, "users"), where("isProfessional", "==", true));
+        const querySnapshot = await getDocs(q);
+        const professionalUsers = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          status: auth.currentUser?.uid === doc.id ? "Online" : "Offline", // Mark current authenticated user as online
+        }));
+        setUsers(professionalUsers);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchActiveProfessionals();
   }, []);
 
-  // Placeholder for fetching other user from Firebase (callee)
-  const fetchCalleeUser = async (calleeId: string) => {
-    const userDocRef = doc(db, 'users', calleeId);
-    const userDocSnap = await getDoc(userDocRef);
-
-    if (userDocSnap.exists()) {
-      const calleeData = userDocSnap.data();
-      setCalleeUser(calleeData); // Set callee data
-    } else {
-      console.error('Callee not found!');
-    }
+  const onDateChange = (event, selectedDate) => {
+    const currentDate = selectedDate || selectedDate;
+    setShowDatePicker(false);
+    setSelectedDate(currentDate);
+    setDateTimeSet(true);
   };
 
-  const startCall = () => {
-    if (!calleeUser) {
-      setCallStatus('No callee available!');
-      return;
-    }
-
-    // Begin call logic (replace with actual WebRTC implementation)
-    setCallStatus('Calling...');
-
-    // Example of setting call data to Firestore (Firebase Realtime Database can also be used)
-    const callDocRef = doc(db, 'calls', `${callerUser}_${calleeUser.uid}`);
-    setDoc(callDocRef, {
-      caller: callerUser,
-      callee: calleeUser.uid,
-      status: 'calling',
-      timestamp: new Date(),
-    }).then(() => {
-      // Simulate WebRTC or signaling setup
-      console.log('Call started');
-    });
-  };
-
-  const endCall = () => {
-    // End call logic
-    setCallStatus('Call Ended');
-    setLocalStream(null);
-    setRemoteStream(null);
-
-    // Example of updating the call status in Firestore
-    const callDocRef = doc(db, 'calls', `${callerUser}_${calleeUser.uid}`);
-    updateDoc(callDocRef, { status: 'ended' }).then(() => {
-      console.log('Call ended');
-    });
+  const onTimeChange = (event, selectedTime) => {
+    const currentTime = selectedTime || selectedTime;
+    setShowTimePicker(false);
+    setSelectedTime(currentTime);
+    setDateTimeSet(true);
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
-      <Text style={[styles.title, { color: Colors[colorScheme ?? 'light'].text }]}>
-        Video Call
-      </Text>
-
-      {/* Video Container */}
-      <View style={styles.videoContainer}>
-        {/* Local Video (User's own video) */}
-        <View style={[styles.videoBox, { borderColor: Colors[colorScheme ?? 'light'].text }]}>
-          <Text style={[styles.videoLabel, { color: Colors[colorScheme ?? 'light'].text }]}>Local</Text>
-          {localStream ? (
-            <Text>Local Video Stream</Text> // Placeholder for local video stream
-          ) : (
-            <Text>No Local Stream</Text>
-          )}
+    <ScrollView style={{ flex: 1, backgroundColor: Colors[theme].background }}>
+      {/* Header */}
+      <View style={{ backgroundColor: "#E89600", padding: 20, borderBottomLeftRadius: 20, borderBottomRightRadius: 20 }}>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          {/* Use auth.currentUser?.photoURL for profile image */}
+          <Image
+            source={{ uri: auth.currentUser?.profileImage || "https://via.placeholder.com/50" }}
+            style={{ width: 50, height: 50, borderRadius: 25 }}
+          />
+          <Text style={{ color: Colors[theme].text, fontSize: 18, fontWeight: "bold", marginLeft: 10 }}>
+            Hello, Welcome 🎉 {"\n"} <Text style={{ fontWeight: "normal" }}>{auth.currentUser?.displayName || "Guest"}</Text>
+          </Text>
         </View>
 
-        {/* Remote Video (Other user's video) */}
-        <View style={[styles.videoBox, { borderColor: Colors[colorScheme ?? 'light'].text }]}>
-          <Text style={[styles.videoLabel, { color: Colors[colorScheme ?? 'light'].text }]}>Remote</Text>
-          {remoteStream ? (
-            <Text>Remote Video Stream</Text> // Placeholder for remote video stream
-          ) : (
-            <Text>No Remote Stream</Text>
-          )}
+        {/* Search Bar */}
+        <View style={{ flexDirection: "row", backgroundColor: "#fff", borderRadius: 10, padding: 10, marginTop: 15 }}>
+          <Ionicons name="search" size={20} color="gray" />
+          <TextInput placeholder="Search user.." style={{ marginLeft: 10, flex: 1 }} />
         </View>
       </View>
 
-      {/* Buttons for actions */}
-      <View style={styles.buttonsContainer}>
-        <Button title="Start Call" onPress={startCall} />
-        <Button title="End Call" onPress={endCall} />
+      {/* Categories */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 15, paddingHorizontal: 15 }}>
+        {categories.map((category) => (
+          <TouchableOpacity key={category.id} style={{ backgroundColor: Colors[theme].tint, padding: 10, borderRadius: 20, marginRight: 10 }}>
+            <Ionicons name={category.icon} size={16} color={category.color} />
+            <Text style={{ marginLeft: 5, color: Colors[theme].text }}>{category.name}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      {/* Active Users */}
+      <View style={{ paddingHorizontal: 15 }}>
+        <Text style={{ fontSize: 18, fontWeight: "bold", color: Colors[theme].text }}>Active Professionals</Text>
+        <FlatList
+          horizontal
+          data={users}
+          keyExtractor={(item) => item.id}
+          showsHorizontalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={{
+                backgroundColor: selectedProfessional?.id === item.id ? "#ddd" : "#fff",
+                padding: 10,
+                borderRadius: 10,
+                marginRight: 10,
+                marginTop: 10,
+              }}
+              onPress={() => setSelectedProfessional(item)}
+            >
+              <Image source={{ uri: item.profileImage || "https://via.placeholder.com/100" }} style={{ width: 100, height: 100, borderRadius: 10 }} />
+              <Text style={{ fontSize: 16, fontWeight: "bold", marginTop: 5, color: "black" }}>{item.firstName}</Text>
+              <Text style={{ fontSize: 14, color: item.status === "Online" ? "green" : "gray" }}>{item.status}</Text>
+            </TouchableOpacity>
+          )}
+        />
       </View>
 
-      {/* Status Message */}
-      <Text style={[styles.status, { color: Colors[colorScheme ?? 'light'].text }]}>
-        {callStatus}
-      </Text>
-    </View>
+      {/* Date Picker */}
+      {selectedProfessional && (
+        <View style={{ paddingHorizontal: 15, marginTop: 20 }}>
+          <Text style={{ fontSize: 16, fontWeight: "bold", color: Colors[theme].text }}>Select a Date:</Text>
+          <TouchableOpacity
+            style={{
+              backgroundColor: "#fff",
+              padding: 10,
+              borderRadius: 10,
+              marginTop: 5,
+            }}
+            onPress={() => setShowDatePicker(true)}
+          >
+            <Text>{selectedDate.toLocaleDateString()}</Text>
+          </TouchableOpacity>
+
+          {showDatePicker && (
+            <DateTimePicker
+              value={selectedDate}
+              mode="date"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              onChange={onDateChange}
+            />
+          )}
+
+          <Text style={{ fontSize: 16, fontWeight: "bold", color: Colors[theme].text, marginTop: 10 }}>Select a Time:</Text>
+          <TouchableOpacity
+            style={{
+              backgroundColor: "#fff",
+              padding: 10,
+              borderRadius: 10,
+              marginTop: 5,
+            }}
+            onPress={() => setShowTimePicker(true)}
+          >
+            <Text>{selectedTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</Text>
+          </TouchableOpacity>
+
+          {showTimePicker && (
+            <DateTimePicker
+              value={selectedTime}
+              mode="time"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              onChange={onTimeChange}
+            />
+          )}
+        </View>
+      )}
+
+      {/* Request Booking Button */}
+      {dateTimeSet && (
+        <View style={{ paddingHorizontal: 15, marginTop: 20 }}>
+          <Button title="Request Booking" onPress={() => alert(`Booking requested with ${selectedProfessional.firstName} on ${selectedDate.toLocaleDateString()} at ${selectedTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`)} />
+        </View>
+      )}
+    </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  videoContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 20,
-    width: '100%',
-  },
-  videoBox: {
-    width: 150,
-    height: 150,
-    borderWidth: 2,
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginHorizontal: 10,
-  },
-  videoLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  buttonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 20,
-  },
-  status: {
-    fontSize: 18,
-    fontWeight: '500',
-  },
-});
