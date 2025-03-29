@@ -94,17 +94,20 @@ const HomeScreen = () => {
 
       // Check if the user has already liked the post
       if (likedBy.includes(user.uid)) {
-        alert("You have already liked this post.");
-        return;
+        // User has already liked the post, so decrement the like count
+        await updateDoc(postRef, {
+          likes: increment(-1), // Decrement the likes field by 1
+          likedBy: likedBy.filter((uid: string) => uid !== user.uid), // Remove the user's ID from the likedBy array
+        });
+        console.log("Like removed successfully!");
+      } else {
+        // User has not liked the post, so increment the like count
+        await updateDoc(postRef, {
+          likes: increment(1), // Increment the likes field by 1
+          likedBy: [...likedBy, user.uid], // Add the user's ID to the likedBy array
+        });
+        console.log("Post liked successfully!");
       }
-
-      // Update the post: increment likes and add user ID to likedBy array
-      await updateDoc(postRef, {
-        likes: increment(1),
-        likedBy: [...likedBy, user.uid], // Add the user's ID to the likedBy array
-      });
-
-      console.log("Post liked successfully!");
     } catch (error) {
       console.error("Error liking post:", error);
     }
