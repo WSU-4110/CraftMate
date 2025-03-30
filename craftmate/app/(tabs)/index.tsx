@@ -7,6 +7,7 @@ import { collection, query, orderBy, onSnapshot, addDoc, doc, getDoc, updateDoc,
 import { db } from '../../constants/firebaseConfig';
 import { getAuth } from 'firebase/auth';
 import { useRouter } from 'expo-router'; // Import useRouter
+import * as ImagePicker from 'expo-image-picker'; // Import ImagePicker
 
 interface Post {
   id: string;
@@ -16,6 +17,7 @@ interface Post {
   likes: number;
   profileImage: string;
   comments: number; 
+  image?: string; // Add image property to Post interface
 }
 
 const HomeScreen = () => {
@@ -23,6 +25,8 @@ const HomeScreen = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPostContent, setNewPostContent] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null); // State to store the selected image
+  const [selectedImages, setSelectedImages] = useState<string[]>([]); // State to store multiple selected images
   const router = useRouter();
 
   useEffect(() => {
@@ -37,6 +41,25 @@ const HomeScreen = () => {
 
     return () => unsubscribe();
   }, []);
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true, // Allow multiple image selection
+      allowsEditing: true,
+      aspect: [1, 1], // Square aspect ratio
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const newImages = result.assets.map((asset) => asset.uri); // Extract URIs from selected images
+      setSelectedImages((prevImages) => [...prevImages, ...newImages]); // Append new images to the existing array
+    }
+  };
+
+  const handleRemoveImage = (uri: string) => {
+    setSelectedImages((prevImages) => prevImages.filter((image) => image !== uri));
+  };
 
   const handleAddPost = async () => {
     const auth = getAuth();
@@ -58,16 +81,19 @@ const HomeScreen = () => {
     const userData = userDoc.data();
     const username = userData?.username || "Anonymous";
 
-    if (newPostContent.trim()) {
+    if (newPostContent.trim() || selectedImages.length > 0) {
       await addDoc(collection(db, "posts"), {
         username,
         content: newPostContent,
         timestamp: new Date().toISOString(),
         likes: 0,
+        comments: 0,
         profileImage: userData?.profileImage || "https://via.placeholder.com/150", // Use user's profile image or a placeholder
         userId: user.uid,
+        images: selectedImages, // Save the array of selected images
       });
       setNewPostContent("");
+      setSelectedImages([]); // Clear the selected images
     }
   };
 
@@ -127,12 +153,19 @@ const HomeScreen = () => {
             </Text>
           </View>
           <Text style={[styles.postTimestamp, { color: Colors[theme].subtext }]}>
-            {new Date(item.timestamp).toLocaleString()}
+            {new Date(item.timestamp).toLocaleDateString()}
           </Text>
         </View>
         <Text style={[styles.postContent, { color: Colors[theme].postText }]}>
           {item.content}
         </Text>
+        {/* Display the first image from the images array */}
+        {item.images && item.images.length > 0 && (
+          <Image
+            source={{ uri: item.images[0] }} // Display the first image
+            style={styles.postImage} // Style for the post image
+          />
+        )}
         <View style={styles.postFooter}>
           <View style={styles.postActions}>
             {/* Like Button */}
@@ -189,17 +222,64 @@ const HomeScreen = () => {
           horizontal={false}
         />
 
+        {/* Display Selected Image */}
+        {selectedImage && (
+          <View style={[styles.previewContainer, { borderColor: Colors[theme].text, backgroundColor: Colors[theme].background }]}>
+            <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
+            <TouchableOpacity 
+              style={styles.removeImageButton}
+              onPress={() => setSelectedImage(null)} // Clear the selected image
+            >
+              <Ionicons name="close-circle" size={24} color={Colors[theme].text} />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Display Selected Images */}
+        {selectedImages.length > 0 && (
+          <View style={styles.selectedImagesContainer}>
+            <FlatList
+              data={selectedImages}
+              horizontal
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => (
+                <View style={styles.imagePreviewContainer}>
+                  <Image source={{ uri: item }} style={styles.imagePreview} />
+                  <TouchableOpacity
+                    style={styles.removeImageButton}
+                    onPress={() => handleRemoveImage(item)}
+                  >
+                    <Ionicons name="close-circle" size={24} color={Colors[theme].text} />
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+          </View>
+        )}
+
         <View style={[styles.inputContainer, { backgroundColor: Colors[theme].background, borderColor: Colors[theme].text }]}>
-          <TextInput
-            placeholderTextColor={Colors[theme].icon}
-            style={[styles.input, { borderColor: Colors[theme].text, color: Colors[theme].text }]}
-            value={newPostContent}
-            onChangeText={setNewPostContent}
-            placeholder="Write a new post..."
-          />
-          <TouchableOpacity style={[styles.postButton]} onPress={handleAddPost}>
-            <Text style={[styles.postButtonText, { color: Colors[theme].background }]}>Post</Text>
-          </TouchableOpacity>
+          <View style={styles.inputRow}>
+            <TextInput
+              placeholderTextColor={Colors[theme].icon}
+              style={[styles.input, { borderColor: Colors[theme].text, color: Colors[theme].text }]}
+              value={newPostContent}
+              onChangeText={setNewPostContent}
+              placeholder="Write a new post..."
+              multiline
+            />
+            <TouchableOpacity 
+              style={styles.imageButton} 
+              onPress={pickImage}
+            >
+              <Ionicons name="image" size={24} color={Colors[theme].text} />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.postButton} 
+              onPress={handleAddPost}
+            >
+              <Text style={[styles.postButtonText, { color: Colors[theme].background }]}>Post</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -300,11 +380,12 @@ const styles = StyleSheet.create({
   },
   postButton: {
     backgroundColor: '#E89600',
-    paddingHorizontal: 30,
+    paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
+    marginLeft: 10,
   },
   postButtonText: {
     fontWeight: 'bold',
@@ -322,6 +403,79 @@ const styles = StyleSheet.create({
     marginLeft: 5, // Space between the icon and text
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  postImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 10,
+    marginTop: 10,
+  },
+  imagePickerButton: {
+    backgroundColor: '#E89600',
+    padding: 10,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10, // Add spacing between the input and the button
+  },
+  selectedImageContainer: {
+    marginBottom: 10, // Add spacing below the image
+    alignItems: 'center', // Center the image horizontally
+  },
+  selectedImage: {
+    width: Dimensions.get('window').width - 40, // Match the width of the input container
+    height: 200, // Fixed height for the image
+    borderRadius: 10, // Rounded corners
+    resizeMode: 'cover', // Ensure the image covers the container
+  },
+  previewContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10, // Space below the preview container
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  imagePreview: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    marginRight: 10, // Space between the image and the remove button
+  },
+  removeImageButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+  },
+  imageButton: {
+    marginLeft: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  selectedImagesContainer: {
+    flexDirection: 'row',
+    marginBottom: 10, // Space below the image container
+  },
+  imagePreviewContainer: {
+    marginRight: 10, // Space between images
+    alignItems: 'center',
+  },
+  imagePreview: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 12,
+    padding: 2,
   },
 });
 
