@@ -6,8 +6,9 @@ import { Colors } from '../../constants/Colors';
 import { collection, query, orderBy, onSnapshot, addDoc, doc, getDoc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../../constants/firebaseConfig';
 import { getAuth } from 'firebase/auth';
-import { useRouter } from 'expo-router'; // Import useRouter
-import * as ImagePicker from 'expo-image-picker'; // Import ImagePicker
+import { useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system'; // Import FileSystem to handle file reading
 
 interface Post {
   id: string;
@@ -17,7 +18,7 @@ interface Post {
   likes: number;
   profileImage: string;
   comments: number; 
-  image?: string; // Add image property to Post interface
+  images?: string[]; // Array of base64 encoded images
 }
 
 const HomeScreen = () => {
@@ -25,8 +26,7 @@ const HomeScreen = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPostContent, setNewPostContent] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedImage, setSelectedImage] = useState<string | null>(null); // State to store the selected image
-  const [selectedImages, setSelectedImages] = useState<string[]>([]); // State to store multiple selected images
+  const [selectedImages, setSelectedImages] = useState<string[]>([]); // State to store base64 encoded images
   const router = useRouter();
 
   useEffect(() => {
@@ -42,23 +42,49 @@ const HomeScreen = () => {
     return () => unsubscribe();
   }, []);
 
-  const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true, // Allow multiple image selection
-      allowsEditing: true,
-      aspect: [1, 1], // Square aspect ratio
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      const newImages = result.assets.map((asset) => asset.uri); // Extract URIs from selected images
-      setSelectedImages((prevImages) => [...prevImages, ...newImages]); // Append new images to the existing array
+  // Function to convert image URI to base64
+  const uriToBase64 = async (uri: string): Promise<string> => {
+    try {
+      // Read the file as base64
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      
+      // Get file extension from the URI
+      const fileExtension = uri.split('.').pop()?.toLowerCase() || 'jpg';
+      
+      // Create proper base64 string with MIME type
+      const mimeType = fileExtension === 'png' ? 'image/png' : 'image/jpeg';
+      return `data:${mimeType};base64,${base64}`;
+    } catch (error) {
+      console.error('Error converting image to base64:', error);
+      return '';
     }
   };
 
-  const handleRemoveImage = (uri: string) => {
-    setSelectedImages((prevImages) => prevImages.filter((image) => image !== uri));
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      allowsEditing: true,
+      aspect: [1, 1], // Square aspect ratio
+      quality: 0.5, // Reduce quality to keep base64 strings smaller
+    });
+
+    if (!result.canceled) {
+      // Convert each selected image to base64 and add to state
+      const base64PromiseArray = result.assets.map(asset => uriToBase64(asset.uri));
+      const base64Images = await Promise.all(base64PromiseArray);
+      
+      // Filter out any failed conversions
+      const validBase64Images = base64Images.filter(base64 => base64 !== '');
+      
+      setSelectedImages(prevImages => [...prevImages, ...validBase64Images]);
+    }
+  };
+
+  const handleRemoveImage = (base64: string) => {
+    setSelectedImages(prevImages => prevImages.filter(image => image !== base64));
   };
 
   const handleAddPost = async () => {
@@ -88,9 +114,9 @@ const HomeScreen = () => {
         timestamp: new Date().toISOString(),
         likes: 0,
         comments: 0,
-        profileImage: userData?.profileImage || "https://via.placeholder.com/150", // Use user's profile image or a placeholder
+        profileImage: userData?.profileImage || "https://via.placeholder.com/150",
         userId: user.uid,
-        images: selectedImages, // Save the array of selected images
+        images: selectedImages, // Save the array of base64 encoded images
       });
       setNewPostContent("");
       setSelectedImages([]); // Clear the selected images
@@ -122,15 +148,15 @@ const HomeScreen = () => {
       if (likedBy.includes(user.uid)) {
         // User has already liked the post, so decrement the like count
         await updateDoc(postRef, {
-          likes: increment(-1), // Decrement the likes field by 1
-          likedBy: likedBy.filter((uid: string) => uid !== user.uid), // Remove the user's ID from the likedBy array
+          likes: increment(-1),
+          likedBy: likedBy.filter((uid: string) => uid !== user.uid),
         });
         console.log("Like removed successfully!");
       } else {
         // User has not liked the post, so increment the like count
         await updateDoc(postRef, {
-          likes: increment(1), // Increment the likes field by 1
-          likedBy: [...likedBy, user.uid], // Add the user's ID to the likedBy array
+          likes: increment(1),
+          likedBy: [...likedBy, user.uid],
         });
         console.log("Post liked successfully!");
       }
@@ -162,8 +188,8 @@ const HomeScreen = () => {
         {/* Display the first image from the images array */}
         {item.images && item.images.length > 0 && (
           <Image
-            source={{ uri: item.images[0] }} // Display the first image
-            style={styles.postImage} // Style for the post image
+            source={{ uri: item.images[0] }} // Base64 data URLs can be used directly
+            style={styles.postImage}
           />
         )}
         <View style={styles.postFooter}>
@@ -181,7 +207,7 @@ const HomeScreen = () => {
             {/* Comment Button */}
             <TouchableOpacity
               style={[styles.actionButton, styles.ovalContainer, { backgroundColor: Colors[theme].background }]}
-              onPress={() => router.push(`/post/${item.id}`)} // Navigate to the post page
+              onPress={() => router.push(`/post/${item.id}`)}
             >
               <Ionicons name="chatbubble-outline" size={16} color={Colors[theme].icon} />
               <Text style={[styles.ovalText, { color: Colors[theme].icon }]}>
@@ -221,19 +247,6 @@ const HomeScreen = () => {
           contentContainerStyle={styles.listContent}
           horizontal={false}
         />
-
-        {/* Display Selected Image */}
-        {selectedImage && (
-          <View style={[styles.previewContainer, { borderColor: Colors[theme].text, backgroundColor: Colors[theme].background }]}>
-            <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
-            <TouchableOpacity 
-              style={styles.removeImageButton}
-              onPress={() => setSelectedImage(null)} // Clear the selected image
-            >
-              <Ionicons name="close-circle" size={24} color={Colors[theme].text} />
-            </TouchableOpacity>
-          </View>
-        )}
 
         {/* Display Selected Images */}
         {selectedImages.length > 0 && (
@@ -289,7 +302,7 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20, // 20 padding on both sides
+    padding: 20,
     alignItems: 'center',
   },
   logo: {
@@ -307,10 +320,10 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 20,
-    width: '100%', // Ensure the list content fits the parent container
+    width: '100%',
   },
   postContainer: {
-    width: Dimensions.get('window').width - 40, // Subtract the 20 padding on both sides
+    width: Dimensions.get('window').width - 40,
     padding: 15,
     marginVertical: 8,
     borderRadius: 10,
@@ -321,7 +334,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 3,
-    alignSelf: 'center', // Center the container horizontally
+    alignSelf: 'center',
   },
   postHeader: {
     flexDirection: 'row',
@@ -394,13 +407,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 12, // Horizontal padding for the oval shape
-    paddingVertical: 6, // Vertical padding for the oval shape
-    borderRadius: 20, // Makes the container oval
-    marginLeft: 10, // Space between buttons
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginLeft: 10,
   },
   ovalText: {
-    marginLeft: 5, // Space between the icon and text
+    marginLeft: 5,
     fontSize: 14,
     fontWeight: 'bold',
   },
@@ -409,42 +422,6 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 10,
     marginTop: 10,
-  },
-  imagePickerButton: {
-    backgroundColor: '#E89600',
-    padding: 10,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 10, // Add spacing between the input and the button
-  },
-  selectedImageContainer: {
-    marginBottom: 10, // Add spacing below the image
-    alignItems: 'center', // Center the image horizontally
-  },
-  selectedImage: {
-    width: Dimensions.get('window').width - 40, // Match the width of the input container
-    height: 200, // Fixed height for the image
-    borderRadius: 10, // Rounded corners
-    resizeMode: 'cover', // Ensure the image covers the container
-  },
-  previewContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10, // Space below the preview container
-    padding: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  imagePreview: {
-    width: 80,
-    height: 80,
-    borderRadius: 10,
-    marginRight: 10, // Space between the image and the remove button
-  },
-  removeImageButton: {
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   inputRow: {
     flexDirection: 'row',
@@ -458,10 +435,10 @@ const styles = StyleSheet.create({
   },
   selectedImagesContainer: {
     flexDirection: 'row',
-    marginBottom: 10, // Space below the image container
+    marginBottom: 10,
   },
   imagePreviewContainer: {
-    marginRight: 10, // Space between images
+    marginRight: 10,
     alignItems: 'center',
   },
   imagePreview: {
