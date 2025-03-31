@@ -133,30 +133,26 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 20,
+        paddingTop: 30, // Add padding to shift everything down
     },
     header: {
+        fontSize: 24,
         flexDirection: 'row',
-        paddingVertical: 10, // Reduced padding for a thinner header
         alignItems: "center",
-        justifyContent: "space-between",
-        borderRadius: 8,
+        justifyContent: "center", // Center the username text
+        position: "relative", // Ensure proper positioning for the back button
         marginBottom: 10,
-        marginTop: 30
+        marginTop: 30,
     },
-    
     backButton: {
-        paddingHorizontal: 10, // Sufficient padding for touch area
-        paddingVertical: 10
-    },
-    backButtonText: {
-        fontSize: 25,
+        position: "absolute", // Position the back button absolutely
+        left: 0, // Align it as far left as possible
+        paddingVertical: 10, // Keep vertical padding for touch area
+        zIndex: 1, // Ensure it is above other elements
     },
     headerText: {
-        position: 'absolute', // Position text absolutely
-        width: '100%', // Ensure it spans the full width
-        textAlign: 'center', // Center text horizontally
         fontSize: 20,
-        fontWeight: "bold"
+        fontWeight: "bold",
     },
     list: {
         flex: 1,

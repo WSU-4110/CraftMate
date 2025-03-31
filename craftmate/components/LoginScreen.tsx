@@ -329,7 +329,7 @@ export default function LoginScreen() {
         </View>
 
         <TouchableOpacity style={styles.button} onPress={handleSignOut}>
-          <Text style={styles.buttonText}>Sign Out</Text>
+          <Text style={styles.buttonText }>Sign Out</Text>
         </TouchableOpacity>
       </ScrollView>
     );
