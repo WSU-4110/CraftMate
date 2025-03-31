@@ -16,7 +16,7 @@ import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/fires
 import { db, auth } from "../constants/firebaseConfig";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
-import { useNavigation } from "@react-navigation/native";
+import { ThemeContext, useNavigation } from "@react-navigation/native";
 
 // Define the Post interface
 interface Post {
@@ -30,6 +30,7 @@ interface Post {
   comments: number;
   images?: string[];
   likedBy?: string[];
+  tags?: string[]; // Added tags field
 }
 
 export default function WritePost() {
@@ -40,6 +41,9 @@ export default function WritePost() {
   const [selectedMedia, setSelectedMedia] = useState<string[]>([]); // State to store multiple media
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userDetails, setUserDetails] = useState<{ username: string; profileImage: string } | null>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]); // State for selected tags
+  const [isTagMenuVisible, setIsTagMenuVisible] = useState(false); // State to toggle tag menu
+  const TAG_OPTIONS = ["Cars", "Building", "Electricity", "Plumbing", "Painting", "Tools"]; // Predefined tags
 
   useEffect(() => {
     const fetchUserDetails = async () => {
@@ -99,6 +103,25 @@ export default function WritePost() {
     setSelectedMedia((prevMedia) => prevMedia.filter((media) => media !== uri));
   };
 
+  const toggleTag = (tag: string) => {
+    setSelectedTags((prevTags) =>
+      prevTags.includes(tag) ? prevTags.filter((t) => t !== tag) : [...prevTags, tag]
+    );
+  };
+
+  const toggleTagMenu = () => {
+    setIsTagMenuVisible((prev) => !prev);
+  };
+
+  const addCustomTag = () => {
+    Alert.prompt("New Tag", "Enter custom tag", (tag) => {
+      if (!tag) return;
+      const trimmed = tag.trim();
+      if (!trimmed || selectedTags.includes(trimmed)) return;
+      setSelectedTags((prevTags) => [...prevTags, trimmed]);
+    });
+  };
+
   const handleSubmitPost = async () => {
     if (!postTitle.trim()) {
       Alert.alert("Error", "Post title is required.");
@@ -125,6 +148,7 @@ export default function WritePost() {
         comments: 0,
         images: selectedMedia, // Save base64 images
         likedBy: [],
+        tags: selectedTags, // Include selected tags
       };
 
       // Add the post to Firestore
@@ -134,6 +158,7 @@ export default function WritePost() {
       setPostTitle(""); // Clear title
       setPostContent(""); // Clear content
       setSelectedMedia([]); // Clear media
+      setSelectedTags([]); // Clear tags
 
       // Navigate back to the previous screen
       navigation.goBack();
@@ -182,6 +207,58 @@ export default function WritePost() {
           value={postTitle}
           onChangeText={setPostTitle}
         />
+
+        {/* Add Tags Button */}
+        <TouchableOpacity
+          style={[
+            styles.addTagsButton,
+            { backgroundColor: Colors[theme].tint }, // Dynamic background color
+          ]}
+          onPress={toggleTagMenu}
+        >
+          <Text style={[styles.addTagsButtonText, { color: Colors[theme].text }]}>
+            Add Tags
+          </Text>
+        </TouchableOpacity>
+
+        {/* Tag Dropdown Menu */}
+        {isTagMenuVisible && (
+          <View style={[styles.tagMenu, { backgroundColor: Colors[theme].background }]}>
+            {[
+              ...new Set([...TAG_OPTIONS, ...selectedTags.filter((t) => !TAG_OPTIONS.includes(t))]),
+              "+",
+            ].map((tag) => (
+              <TouchableOpacity
+                key={tag}
+                style={[
+                  styles.tagButton,
+                  {
+                    backgroundColor:
+                      tag === "+"
+                        ? Colors[theme].inputBackground
+                        : selectedTags.includes(tag)
+                        ? "#E89600"
+                        : Colors[theme].tint,
+                  },
+                ]}
+                onPress={() => (tag === "+" ? addCustomTag() : toggleTag(tag))}
+              >
+                <Text
+                  style={{
+                    color:
+                      tag === "+"
+                        ? "#aaa"
+                        : selectedTags.includes(tag)
+                        ? Colors[theme].background
+                        : Colors[theme].text,
+                  }}
+                >
+                  {tag}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
         {/* Post Body Input */}
         <TextInput
@@ -240,8 +317,13 @@ export default function WritePost() {
           onPress={handleSubmitPost}
           disabled={isSubmitting}
         >
-          <Text style={styles.submitButtonText}>
-            {isSubmitting ? "Submitting..." : "Submit Post"}
+          <Text
+            style={[
+              styles.submitButtonText,
+              { color: Colors[theme].background }, // Dynamic text color based on theme
+            ]}
+          >
+            {isSubmitting ? "Posting..." : "Post"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -327,5 +409,65 @@ const styles = StyleSheet.create({
   },
   topPadding: {
     paddingTop: 25,
+  },
+  addTagsButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20, // Makes the button oval-shaped
+    marginBottom: 20,
+    alignSelf: "flex-start", // Ensures the button doesn't stretch
+  },
+  addTagsButtonText: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#000", // Text color
+    marginRight: 8, // Space between text and icon
+  },
+  tagMenu: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 20,
+    backgroundColor: "#f9f9f9",
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  tagButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20, // Makes the button oval-shaped
+    marginRight: 8,
+    marginBottom: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tagText: {
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  selectedTagButton: {
+    backgroundColor: "#E89600", // Highlight selected tags
+  },
+  selectedTagText: {
+    color: "#fff", // White text for selected tags
+  },
+  customTagButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    marginTop: 10,
+    alignSelf: "flex-start",
+  },
+  customTagButtonText: {
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  radioText: {
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
