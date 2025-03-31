@@ -165,60 +165,76 @@ const HomeScreen = () => {
     }
   };
 
-  const renderItem = ({ item }: { item: Post }) => (
-    <TouchableOpacity onPress={() => router.push(`/post/${item.id}`)}>
-      <View style={[styles.postContainer, { backgroundColor: Colors[theme].card }]}>
-        <View style={styles.postHeader}>
-          <View style={styles.postHeaderLeft}>
-            <Image
-              source={{ uri: item.profileImage || "https://via.placeholder.com/150" }}
-              style={styles.profileImage}
-            />
-            <Text style={[styles.postUsername, { color: Colors[theme].text }]}>
-              {item.username}
+  const renderItem = ({ item }: { item: Post }) => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+  
+    // Check if the current user has already liked the post
+    const hasLiked = item.likedBy?.includes(user?.uid);
+  
+    return (
+      <TouchableOpacity onPress={() => router.push(`/post/${item.id}`)}>
+        <View style={[styles.postContainer, { backgroundColor: Colors[theme].card }]}>
+          <View style={styles.postHeader}>
+            <View style={styles.postHeaderLeft}>
+              <Image
+                source={{ uri: item.profileImage || "https://via.placeholder.com/150" }}
+                style={styles.profileImage}
+              />
+              <Text style={[styles.postUsername, { color: Colors[theme].text }]}>
+                {item.username}
+              </Text>
+            </View>
+            <Text style={[styles.postTimestamp, { color: Colors[theme].subtext }]}>
+              {new Date(item.timestamp).toLocaleDateString()}
             </Text>
           </View>
-          <Text style={[styles.postTimestamp, { color: Colors[theme].subtext }]}>
-            {new Date(item.timestamp).toLocaleDateString()}
+          <Text style={[styles.postContent, { color: Colors[theme].postText }]}>
+            {item.content}
           </Text>
-        </View>
-        <Text style={[styles.postContent, { color: Colors[theme].postText }]}>
-          {item.content}
-        </Text>
-        {/* Display the first image from the images array */}
-        {item.images && item.images.length > 0 && (
-          <Image
-            source={{ uri: item.images[0] }} // Base64 data URLs can be used directly
-            style={styles.postImage}
-          />
-        )}
-        <View style={styles.postFooter}>
-          <View style={styles.postActions}>
-            {/* Like Button */}
-            <TouchableOpacity
-              style={[styles.actionButton, styles.ovalContainer, { backgroundColor: Colors[theme].background }]}
-              onPress={() => handleLikePost(item.id)}
-            >
-              <Ionicons name="thumbs-up-outline" size={16} color={Colors[theme].icon} />
-              <Text style={[styles.ovalText, { color: Colors[theme].icon }]}>
-                {item.likes}
-              </Text>
-            </TouchableOpacity>
-            {/* Comment Button */}
-            <TouchableOpacity
-              style={[styles.actionButton, styles.ovalContainer, { backgroundColor: Colors[theme].background }]}
-              onPress={() => router.push(`/post/${item.id}`)}
-            >
-              <Ionicons name="chatbubble-outline" size={16} color={Colors[theme].icon} />
-              <Text style={[styles.ovalText, { color: Colors[theme].icon }]}>
-                {item.comments || 0}
-              </Text>
-            </TouchableOpacity>
+          {/* Display the first image from the images array */}
+          {item.images && item.images.length > 0 && (
+            <Image
+              source={{ uri: item.images[0] }}
+              style={styles.postImage}
+            />
+          )}
+          <View style={styles.postFooter}>
+            <View style={styles.postActions}>
+              {/* Like Button */}
+              <TouchableOpacity
+                style={[
+                  styles.actionButton,
+                  styles.ovalContainer,
+                  { backgroundColor: hasLiked ? '#E89600' : Colors[theme].background }, // Change color if liked
+                ]}
+                onPress={() => handleLikePost(item.id)}
+              >
+                <Ionicons
+                  name="thumbs-up-outline"
+                  size={16}
+                  color={hasLiked ? '#FFF' : Colors[theme].icon} // Change icon color if liked
+                />
+                <Text style={[styles.ovalText, { color: hasLiked ? '#FFF' : Colors[theme].icon }]}>
+                  {item.likes}
+                </Text>
+              </TouchableOpacity>
+              {/* Comment Button */}
+              <TouchableOpacity
+                style={[styles.actionButton, styles.ovalContainer, { backgroundColor: Colors[theme].background }]}
+                onPress={() => router.push(`/post/${item.id}`)}
+              >
+                <Ionicons name="chatbubble-outline" size={16} color={Colors[theme].icon} />
+                <Text style={[styles.ovalText, { color: Colors[theme].icon }]}>
+                  {item.comments || 0}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <KeyboardAvoidingView
