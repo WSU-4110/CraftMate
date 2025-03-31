@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   KeyboardAvoidingView,
   TextInput,
   Platform,
+  Modal,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
@@ -39,14 +41,18 @@ interface Post {
   profileImage: string;
   comments: number;
   images?: string[]; // Array of base64 encoded images
+  likedBy?: string[];
 }
 
 const HomeScreen = () => {
   const theme: 'light' | 'dark' = useColorScheme() || 'light';
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPostContent, setNewPostContent] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedImages, setSelectedImages] = useState<string[]>([]); // State to store base64 encoded images
+  const [searchModalVisible, setSearchModalVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
+  const dropdownAnimation = useRef(new Animated.Value(0)).current; // Animated value for dropdown height
   const router = useRouter();
 
   useEffect(() => {
@@ -185,6 +191,32 @@ const HomeScreen = () => {
     }
   };
 
+  const handleSearchPress = () => {
+    if (isDropdownVisible) {
+      // Hide dropdown
+      Animated.timing(dropdownAnimation, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: false,
+      }).start(() => setIsDropdownVisible(false));
+    } else {
+      // Show dropdown
+      setIsDropdownVisible(true);
+      Animated.timing(dropdownAnimation, {
+        toValue: 100, // Adjust height as needed
+        duration: 300,
+        useNativeDriver: false,
+      }).start();
+    }
+  };
+
+  const filteredPosts = searchQuery ? 
+    posts.filter((post) =>
+      post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.username.toLowerCase().includes(searchQuery.toLowerCase())
+    ) : 
+    posts;
+
   const renderItem = ({ item }: { item: Post }) => {
     const auth = getAuth();
     const user = auth.currentUser;
@@ -194,7 +226,7 @@ const HomeScreen = () => {
   
     return (
       <TouchableOpacity onPress={() => router.push(`/post/${item.id}`)}>
-        <View style={[styles.postContainer, { backgroundColor: Colors[theme].card }]}>
+        <View style={[styles.postContainer, { backgroundColor: Colors[theme].background, borderColor: Colors[theme].text }]}>
           <View style={styles.postHeader}>
             <View style={styles.postHeaderLeft}>
               <Image
@@ -205,7 +237,7 @@ const HomeScreen = () => {
                 {item.username}
               </Text>
             </View>
-            <Text style={[styles.postTimestamp, { color: Colors[theme].subtext }]}>
+            <Text style={[styles.postTimestamp, { color: Colors[theme].text }]}>
               {new Date(item.timestamp).toLocaleDateString()}
             </Text>
           </View>
@@ -226,7 +258,7 @@ const HomeScreen = () => {
                 style={[
                   styles.actionButton,
                   styles.ovalContainer,
-                  { backgroundColor: hasLiked ? '#E89600' : Colors[theme].background }, // Change color if liked
+                  { backgroundColor: hasLiked ? '#E89600' : Colors[theme].tint }, // Change color if liked
                 ]}
                 onPress={() => handleLikePost(item.id)}
               >
@@ -241,7 +273,7 @@ const HomeScreen = () => {
               </TouchableOpacity>
               {/* Comment Button */}
               <TouchableOpacity
-                style={[styles.actionButton, styles.ovalContainer, { backgroundColor: Colors[theme].background }]}
+                style={[styles.actionButton, styles.ovalContainer, { backgroundColor: Colors[theme].tint }]}
                 onPress={() => router.push(`/post/${item.id}`)}
               >
                 <Ionicons name="chatbubble-outline" size={16} color={Colors[theme].icon} />
@@ -263,25 +295,59 @@ const HomeScreen = () => {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
       <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
-        <Image source={require('../assets/images/craftmate-logo.png')} style={styles.logo} />
+        {/* Custom Header with centered logo and search icon */}
+        <View style={styles.headerContainer}>
+          <View style={styles.leftPlaceholder} />
+          <View style={styles.logoContainer}>
+            <Image 
+              source={require('../assets/images/craftmate-logo.png')} 
+              style={styles.logo} 
+            />
+          </View>
+          <TouchableOpacity 
+            style={styles.searchIconContainer}
+            onPress={handleSearchPress}
+          >
+            <Ionicons name="search" size={26} color={Colors[theme].text} />
+          </TouchableOpacity>
+        </View>
 
-        <TextInput
-          placeholder="Search posts..."
-          placeholderTextColor={Colors[theme].icon}
-          style={[styles.searchInput, { borderColor: Colors[theme].text, color: Colors[theme].text }]}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
+        {/* Animated Dropdown */}
+        {isDropdownVisible && (
+          <Animated.View
+            style={[
+              styles.dropdownContainer,
+              { height: dropdownAnimation, backgroundColor: Colors[theme].background },
+            ]}
+          >
+            <View style={styles.dropdownContent}>
+              <TextInput
+                placeholder="Search posts..."
+                placeholderTextColor={Colors[theme].icon}
+                style={[
+                  styles.searchInput,
+                  { borderColor: Colors[theme].text, color: Colors[theme].text },
+                ]}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoFocus
+              />
+              <TouchableOpacity onPress={handleSearchPress}>
+                <Ionicons name="close" size={26} color={Colors[theme].text} />
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        )}
 
+        {/* Posts List */}
         <FlatList
-          data={posts.filter((post) =>
-            post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            post.username.toLowerCase().includes(searchQuery.toLowerCase())
-          )}
+          data={filteredPosts}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           horizontal={false}
+          ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: Colors[theme].tint }]} />} // Add separator
+          showsVerticalScrollIndicator={false} // Hide vertical scroll bar
         />
 
         {/* Display Selected Images */}
@@ -306,11 +372,24 @@ const HomeScreen = () => {
           </View>
         )}
 
-        <View style={[styles.inputContainer, { backgroundColor: Colors[theme].background, borderColor: Colors[theme].text }]}>
+        {/* Post Input Area */}
+        <View style={[
+          styles.inputContainer, 
+          { 
+            backgroundColor: Colors[theme].background, 
+            borderColor: Colors[theme].text 
+          }
+        ]}>
           <View style={styles.inputRow}>
             <TextInput
               placeholderTextColor={Colors[theme].icon}
-              style={[styles.input, { borderColor: Colors[theme].text, color: Colors[theme].text }]}
+              style={[
+                styles.input, 
+                { 
+                  borderColor: Colors[theme].text, 
+                  color: Colors[theme].text 
+                }
+              ]}
               value={newPostContent}
               onChangeText={setNewPostContent}
               placeholder="Write a new post..."
