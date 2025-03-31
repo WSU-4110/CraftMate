@@ -158,7 +158,7 @@ const HomeScreen = () => {
       <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
         <View style={styles.headerContainer}>
           {user ? (
-            <Link href="/writePost" style={styles.leftIconContainer}>
+            <Link href="../auth/writepost" style={styles.leftIconContainer}>
               <Ionicons name="add" size={26} color={Colors[theme].text} />
             </Link>
           ) : (

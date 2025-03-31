@@ -32,6 +32,7 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="auth/signup" options={{ headerShown: false }} />
+        <Stack.Screen name="auth/writepost" options={{ headerShown: false }} /> {/* Updated route name */}
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />

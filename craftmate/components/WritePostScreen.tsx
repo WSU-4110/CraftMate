@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,10 +12,11 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useColorScheme } from "react-native";
 import { Colors } from "../constants/Colors";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 import { db, auth } from "../constants/firebaseConfig";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
+import { useNavigation } from "@react-navigation/native";
 
 // Define the Post interface
 interface Post {
@@ -32,9 +33,37 @@ interface Post {
 
 export default function WritePost() {
   const theme: "light" | "dark" = useColorScheme() || "light";
+  const navigation = useNavigation(); // Access navigation
   const [postContent, setPostContent] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userDetails, setUserDetails] = useState<{ username: string; profileImage: string } | null>(null);
+
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          Alert.alert("Error", "You must be logged in to create a post.");
+          return;
+        }
+
+        const userDoc = doc(db, "users", user.uid); // Fetch user details from Firestore
+        const userSnapshot = await getDoc(userDoc);
+
+        if (userSnapshot.exists()) {
+          setUserDetails(userSnapshot.data() as { username: string; profileImage: string });
+        } else {
+          console.log("No user details found in Firestore.");
+        }
+      } catch (error) {
+        console.error("Error fetching user details:", error);
+        Alert.alert("Error", "Failed to fetch user details.");
+      }
+    };
+
+    fetchUserDetails();
+  }, []);
 
   const handlePickImage = async () => {
     try {
@@ -69,18 +98,18 @@ export default function WritePost() {
 
     try {
       const user = auth.currentUser;
-      if (!user) {
+      if (!user || !userDetails) {
         Alert.alert("Error", "You must be logged in to submit a post.");
         return;
       }
 
       // Create a new post object
       const postData: Omit<Post, "id"> = {
-        username: user.displayName || "Anonymous",
+        username: userDetails.username || "Anonymous",
         content: postContent.trim(),
         timestamp: serverTimestamp() as unknown as string,
         likes: 0,
-        profileImage: user.photoURL || "https://via.placeholder.com/150",
+        profileImage: userDetails.profileImage || "https://via.placeholder.com/150",
         comments: 0,
         images: selectedImage ? [selectedImage] : [],
         likedBy: [],
@@ -107,57 +136,67 @@ export default function WritePost() {
         { backgroundColor: Colors[theme].background },
       ]}
     >
-      <Text style={[styles.title, { color: Colors[theme].text }]}>
-        Create a New Post
-      </Text>
+      <View style={styles.topPadding}> {/* Added wrapper for padding */}
+        {/* Back Arrow */}
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()} // Navigate back to the previous screen
+        >
+          <Ionicons name="arrow-back" size={24} color={Colors[theme].text} />
+        </TouchableOpacity>
 
-      <TextInput
-        style={[
-          styles.input,
-          {
-            backgroundColor: Colors[theme].inputBackground,
-            color: Colors[theme].text,
-          },
-        ]}
-        placeholder="Write something..."
-        placeholderTextColor={Colors[theme].icon}
-        value={postContent}
-        onChangeText={setPostContent}
-        multiline
-      />
-
-      {selectedImage && (
-        <Image
-          source={{ uri: selectedImage }}
-          style={styles.imagePreview}
+        {/* Post Input */}
+        <TextInput
+          style={[
+            styles.input,
+            {
+              backgroundColor: Colors[theme].inputBackground,
+              color: Colors[theme].text,
+            },
+          ]}
+          placeholder="Write something..."
+          placeholderTextColor={Colors[theme].icon}
+          value={postContent}
+          onChangeText={setPostContent}
+          multiline
         />
-      )}
 
-      <TouchableOpacity
-        style={[
-          styles.imageButton,
-          { backgroundColor: Colors[theme].tint },
-        ]}
-        onPress={handlePickImage}
-      >
-        <Ionicons name="image-outline" size={24} color={Colors[theme].text} />
-        <Text style={[styles.imageButtonText, { color: Colors[theme].text }]}>
-          Add Image
-        </Text>
-      </TouchableOpacity>
+        {/* Image Preview */}
+        {selectedImage && (
+          <Image
+            source={{ uri: selectedImage }}
+            style={styles.imagePreview}
+          />
+        )}
 
-      <TouchableOpacity
-        style={[
-          styles.submitButton,
-          { backgroundColor: isSubmitting ? "#ccc" : "#E89600" },
-        ]}
-        onPress={handleSubmitPost}
-        disabled={isSubmitting}
-      >
-        <Text style={styles.submitButtonText}>
-          {isSubmitting ? "Submitting..." : "Submit Post"}
-        </Text>
-      </TouchableOpacity>
+        {/* Add Image Button */}
+        <TouchableOpacity
+          style={[
+            styles.imageButton,
+            { backgroundColor: Colors[theme].tint },
+          ]}
+          onPress={handlePickImage}
+        >
+          <Ionicons name="image-outline" size={24} color={Colors[theme].text} />
+          <Text style={[styles.imageButtonText, { color: Colors[theme].text }]}>
+            Add Image
+          </Text>
+        </TouchableOpacity>
+
+        {/* Submit Button */}
+        <TouchableOpacity
+          style={[
+            styles.submitButton,
+            { backgroundColor: isSubmitting ? "#ccc" : "#E89600" },
+          ]}
+          onPress={handleSubmitPost}
+          disabled={isSubmitting}
+        >
+          <Text style={styles.submitButtonText}>
+            {isSubmitting ? "Submitting..." : "Submit Post"}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
@@ -209,5 +248,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#fff",
+  },
+  backButton: {
+    marginBottom: 20,
+    alignSelf: "flex-start",
+  },
+  topPadding: {
+    paddingTop: 60, // Adjust padding as needed
   },
 });

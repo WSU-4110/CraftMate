@@ -6,6 +6,7 @@ import { useLocalSearchParams } from "expo-router";
 import { useColorScheme } from "react-native";
 import { Colors } from "../../constants/Colors";
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation
+import { Ionicons } from "@expo/vector-icons"; // Import Ionicons
 
 interface Message {
     id: string;
@@ -71,8 +72,11 @@ export default function MessagesScreen() {
             <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
                 {/* **Receiver's Username Header** */}
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Text style={[styles.backButtonText, { color: Colors[theme].text }]}>←</Text>
+                    <TouchableOpacity
+                        style={styles.backButton}
+                        onPress={() => navigation.goBack()} // Navigate back to the previous screen
+                    >
+                        <Ionicons name="arrow-back" size={24} color={Colors[theme].text} />
                     </TouchableOpacity>
                     <Text style={[styles.headerText, { color: Colors[theme].text }]}>
                         {receiverUsername}
