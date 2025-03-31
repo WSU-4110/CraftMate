@@ -452,9 +452,6 @@ const styles = StyleSheet.create({
   selectedTagButton: {
     backgroundColor: "#E89600", // Highlight selected tags
   },
-  selectedTagText: {
-    color: "#fff", // White text for selected tags
-  },
   customTagButton: {
     paddingVertical: 8,
     paddingHorizontal: 12,
