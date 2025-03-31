@@ -361,7 +361,7 @@ export default function LoginScreen() {
       <View style={styles.footer}>
         <Text style={[styles.footerText, { color: Colors[theme].text }]}>
           Don't have an account?
-          <Link href="../auth/signup" style={styles.footerLink}>
+          <Link href="../pages/signup" style={styles.footerLink}>
             {" "}
             Sign Up
           </Link>
