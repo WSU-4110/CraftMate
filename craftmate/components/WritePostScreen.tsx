@@ -22,7 +22,8 @@ import { useNavigation } from "@react-navigation/native";
 interface Post {
   id: string;
   username: string;
-  content: string;
+  postTitle: string; // Updated from content to postTitle
+  postBody: string; // Added textbody field
   timestamp: string;
   likes: number;
   profileImage: string;
@@ -34,8 +35,9 @@ interface Post {
 export default function WritePost() {
   const theme: "light" | "dark" = useColorScheme() || "light";
   const navigation = useNavigation(); // Access navigation
+  const [postTitle, setPostTitle] = useState(""); // New state for title
   const [postContent, setPostContent] = useState("");
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedMedia, setSelectedMedia] = useState<string[]>([]); // State to store multiple media
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userDetails, setUserDetails] = useState<{ username: string; profileImage: string } | null>(null);
 
@@ -65,32 +67,41 @@ export default function WritePost() {
     fetchUserDetails();
   }, []);
 
-  const handlePickImage = async () => {
+  const handlePickMedia = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: [ImagePicker.MediaType.IMAGE],
+        mediaTypes: ImagePicker.MediaTypeOptions.Images, // Restrict to images only
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.7,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        const resizedImage = await ImageManipulator.manipulateAsync(
-          result.assets[0].uri,
-          [{ resize: { width: 800 } }],
-          { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+        const resizedImages = await Promise.all(
+          result.assets.map(async (asset) => {
+            const manipulatedImage = await ImageManipulator.manipulateAsync(
+              asset.uri,
+              [{ resize: { width: 800 } }], // Resize to 800px width
+              { base64: true, compress: 0.7 } // Compress the image
+            );
+            return `data:image/jpeg;base64,${manipulatedImage.base64}`; // Prefix with MIME type
+          })
         );
-        setSelectedImage(resizedImage.uri);
+        setSelectedMedia((prevMedia) => [...prevMedia, ...resizedImages]); // Add resized images to the list
       }
     } catch (error) {
-      console.error("Error picking image:", error);
-      Alert.alert("Error", "Failed to pick an image.");
+      console.error("Error picking media:", error);
+      Alert.alert("Error", "Failed to pick media.");
     }
   };
 
+  const handleRemoveMedia = (uri: string) => {
+    setSelectedMedia((prevMedia) => prevMedia.filter((media) => media !== uri));
+  };
+
   const handleSubmitPost = async () => {
-    if (!postContent.trim() && !selectedImage) {
-      Alert.alert("Error", "Post content or an image is required.");
+    if (!postTitle.trim()) {
+      Alert.alert("Error", "Post title is required.");
       return;
     }
 
@@ -106,12 +117,13 @@ export default function WritePost() {
       // Create a new post object
       const postData: Omit<Post, "id"> = {
         username: userDetails.username || "Anonymous",
-        content: postContent.trim(),
-        timestamp: serverTimestamp() as unknown as string,
+        postTitle: postTitle.trim(), // Save title
+        postBody: postContent.trim(), // Optional body
+        timestamp: serverTimestamp(),
         likes: 0,
         profileImage: userDetails.profileImage || "https://via.placeholder.com/150",
         comments: 0,
-        images: selectedImage ? [selectedImage] : [],
+        images: selectedMedia, // Save base64 images
         likedBy: [],
       };
 
@@ -119,8 +131,12 @@ export default function WritePost() {
       await addDoc(collection(db, "posts"), postData);
 
       Alert.alert("Success", "Your post has been submitted!");
-      setPostContent("");
-      setSelectedImage(null);
+      setPostTitle(""); // Clear title
+      setPostContent(""); // Clear content
+      setSelectedMedia([]); // Clear media
+
+      // Navigate back to the previous screen
+      navigation.goBack();
     } catch (error) {
       console.error("Error submitting post:", error);
       Alert.alert("Error", "Failed to submit your post.");
@@ -136,22 +152,45 @@ export default function WritePost() {
         { backgroundColor: Colors[theme].background },
       ]}
     >
-      <View style={styles.topPadding}> {/* Added wrapper for padding */}
-        {/* Back Arrow */}
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()} // Navigate back to the previous screen
-        >
-          <Ionicons name="arrow-back" size={24} color={Colors[theme].text} />
-        </TouchableOpacity>
+      <View style={styles.topPadding}>
+        <View style={[styles.headerContainer]}>
+          {/* Back Arrow */}
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color={Colors[theme].text} />
+          </TouchableOpacity>
 
-        {/* Post Input */}
+          {/* Header */}
+          <Text style={[styles.header, { color: Colors[theme].text }]}>
+            Create Post
+          </Text>
+        </View>
+
+        {/* Post Title Input */}
         <TextInput
           style={[
             styles.input,
             {
               backgroundColor: Colors[theme].inputBackground,
               color: Colors[theme].text,
+            },
+          ]}
+          placeholder="Enter title..."
+          placeholderTextColor={Colors[theme].icon}
+          value={postTitle}
+          onChangeText={setPostTitle}
+        />
+
+        {/* Post Body Input */}
+        <TextInput
+          style={[
+            styles.input,
+            {
+              backgroundColor: Colors[theme].inputBackground,
+              color: Colors[theme].text,
+              height: 100, // Adjust height for multiline input
             },
           ]}
           placeholder="Write something..."
@@ -161,25 +200,34 @@ export default function WritePost() {
           multiline
         />
 
-        {/* Image Preview */}
-        {selectedImage && (
-          <Image
-            source={{ uri: selectedImage }}
-            style={styles.imagePreview}
-          />
+        {/* Media Previews */}
+        {selectedMedia.length > 0 && (
+          <ScrollView horizontal style={styles.mediaPreviewContainer}>
+            {selectedMedia.map((uri, index) => (
+              <View key={index} style={styles.mediaPreviewWrapper}>
+                <Image source={{ uri }} style={styles.mediaPreview} />
+                <TouchableOpacity
+                  style={styles.removeMediaButton}
+                  onPress={() => handleRemoveMedia(uri)}
+                >
+                  <Ionicons name="close-circle" size={24} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </ScrollView>
         )}
 
-        {/* Add Image Button */}
+        {/* Add Media Button */}
         <TouchableOpacity
           style={[
             styles.imageButton,
             { backgroundColor: Colors[theme].tint },
           ]}
-          onPress={handlePickImage}
+          onPress={handlePickMedia}
         >
           <Ionicons name="image-outline" size={24} color={Colors[theme].text} />
           <Text style={[styles.imageButtonText, { color: Colors[theme].text }]}>
-            Add Image
+            Add Media
           </Text>
         </TouchableOpacity>
 
@@ -206,12 +254,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 20,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-    textAlign: "center",
-  },
   input: {
     borderWidth: 1,
     borderRadius: 8,
@@ -220,11 +262,26 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderColor: "#ddd",
   },
-  imagePreview: {
-    width: "100%",
-    height: 200,
-    borderRadius: 8,
+  mediaPreviewContainer: {
+    flexDirection: "row",
     marginBottom: 20,
+  },
+  mediaPreviewWrapper: {
+    position: "relative",
+    marginRight: 10,
+  },
+  mediaPreview: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+  },
+  removeMediaButton: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 12,
+    padding: 2,
   },
   imageButton: {
     flexDirection: "row",
@@ -249,11 +306,26 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#fff",
   },
-  backButton: {
+  headerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 20,
-    alignSelf: "flex-start",
+    marginTop: 30,
+    position: "relative",
+  },
+  backButton: {
+    position: "absolute",
+    left: 0,
+    paddingVertical: 10,
+    zIndex: 1,
+  },
+  header: {
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
   },
   topPadding: {
-    paddingTop: 60, // Adjust padding as needed
+    paddingTop: 25,
   },
 });
