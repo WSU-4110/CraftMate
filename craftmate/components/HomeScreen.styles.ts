@@ -26,6 +26,10 @@ const styles = StyleSheet.create({
     height: 60,
     resizeMode: 'contain',
   },
+  leftIconContainer: {
+    width: 40,
+    alignItems: 'flex-start',
+  },
   searchIconContainer: {
     width: 40,
     alignItems: 'flex-end',
