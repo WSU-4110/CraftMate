@@ -288,6 +288,7 @@ export default function WritePost() {
           style={[
             styles.input,
             {
+              marginBottom: 20,
               backgroundColor: Colors[theme].inputBackground,
               color: Colors[theme].text,
               height: 100, // Adjust height for multiline input
