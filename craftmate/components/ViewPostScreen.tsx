@@ -72,13 +72,46 @@ export default function ViewPostScreen() {
     return null;
   }
 
+  // Helper function to format base64 image source properly
+  const getImageSource = (imageString: string) => {
+    if (!imageString) return undefined;
+    
+    // Check if it's already a complete data URI
+    if (imageString.startsWith('data:image')) {
+      return { uri: imageString };
+    }
+    // If it's just the base64 string without the prefix
+    else if (imageString.match(/^[A-Za-z0-9+/=]+$/)) {
+      return { uri: `data:image/jpeg;base64,${imageString}` };
+    }
+    // If it's a URL
+    else {
+      return { uri: imageString };
+    }
+  };
+
+  // Format timestamp or return a default value
+  const formatTimestamp = (timestamp: string) => {
+    if (!timestamp) return "No date";
+    
+    try {
+      // Try to parse the timestamp
+      const date = new Date(timestamp);
+      
+      // Check if the date is valid
+      if (isNaN(date.getTime())) {
+        return "No date";
+      }
+      
+      // Return formatted date
+      return date.toLocaleDateString();
+    } catch (e) {
+      return "No date";
+    }
+  };
+
   return (
-    <ScrollView
-      contentContainerStyle={[
-        styles.container,
-        { backgroundColor: Colors[theme].background },
-      ]}
-    >
+    <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
       <View style={styles.headerContainer}>
         <TouchableOpacity
           style={styles.backButton}
@@ -86,34 +119,29 @@ export default function ViewPostScreen() {
         >
           <Ionicons name="arrow-back" size={24} color={Colors[theme].text} />
         </TouchableOpacity>
-        <Text style={[styles.header, { color: Colors[theme].text }]}>
-          {post.postTitle}
+        
+        {/* Centered profile container */}
+        <View style={styles.headerContent}>
+          <View style={styles.profileContainer}>
+            <Image
+              source={getImageSource(post.profileImage)}
+              style={styles.profileImage}
+            />
+            <Text style={[styles.username, { color: Colors[theme].text }]}>
+              {post.username}
+            </Text>
+          </View>
+        </View>
+        
+        {/* Timestamp positioned absolutely to the right */}
+        <Text style={[styles.timestamp, { color: Colors[theme].text }]}>
+          {post.timestamp
+            ? new Date(post.timestamp).toLocaleDateString() // Display date like in HomeScreen
+            : "No date"}
         </Text>
       </View>
-
-      <View style={styles.postContainer}>
-        <View style={styles.userInfo}>
-          <Image
-            source={{ uri: post.profileImage }}
-            style={styles.profileImage}
-          />
-          <Text style={[styles.username, { color: Colors[theme].text }]}>
-            {post.username}
-          </Text>
-        </View>
-
-        <Text style={[styles.postBody, { color: Colors[theme].text }]}>
-          {post.postBody}
-        </Text>
-
-        {post.images && post.images.length > 0 && (
-          <ScrollView horizontal style={styles.imageContainer}>
-            {post.images.map((uri, index) => (
-              <Image key={index} source={{ uri }} style={styles.postImage} />
-            ))}
-          </ScrollView>
-        )}
-
+      
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
         {post.tags && post.tags.length > 0 && (
           <View style={styles.tagsContainer}>
             {post.tags.map((tag, index) => (
@@ -126,10 +154,81 @@ export default function ViewPostScreen() {
           </View>
         )}
 
-        <Text style={[styles.timestamp, { color: Colors[theme].icon }]}>
-          {new Date(post.timestamp).toLocaleString()}
+        <Text style={[styles.postTitle, { color: Colors[theme].text }]}>
+          {post.postTitle}
         </Text>
-      </View>
-    </ScrollView>
+
+        {post.images && post.images.length > 0 && (
+          <ScrollView horizontal style={styles.imageContainer}>
+            {post.images.map((imageData, index) => (
+              <Image
+                key={index}
+                source={getImageSource(imageData)}
+                style={styles.postImage}
+              />
+            ))}
+          </ScrollView>
+        )}
+
+        <View
+          style={[
+            styles.postContainer,
+            {
+              backgroundColor: Colors[theme].background,
+              borderColor: Colors[theme].text,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.postBody,
+              { color: Colors[theme].postText, fontWeight: "bold" },
+            ]}
+          >
+            {post.postBody}
+          </Text>
+
+          <View style={styles.postFooter}>
+            <View style={styles.postActions}>
+              <TouchableOpacity
+                style={[
+                  styles.actionButton,
+                  styles.ovalContainer,
+                  { backgroundColor: Colors[theme].tint },
+                ]}
+                onPress={() => Alert.alert("Like functionality not implemented")}
+              >
+                <Ionicons
+                  name="thumbs-up-outline"
+                  size={16}
+                  color={Colors[theme].text}
+                />
+                <Text style={[styles.ovalText, { color: Colors[theme].text }]}>
+                  {post.likes}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.actionButton,
+                  styles.ovalContainer,
+                  { backgroundColor: Colors[theme].tint },
+                ]}
+                onPress={() => Alert.alert("Comment functionality not implemented")}
+              >
+                <Ionicons
+                  name="chatbubble-outline"
+                  size={16}
+                  color={Colors[theme].text}
+                />
+                <Text style={[styles.ovalText, { color: Colors[theme].text }]}>
+                  {post.comments || 0}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+    </View>
   );
 }

@@ -213,22 +213,22 @@ const HomeScreen = () => {
                     ? "#E89600" // Highlighted color for liked state
                     : Colors[theme].tint, // Default color
                 },
-                ]}
-                onPress={() => handleLikePost(item.id)}
-              >
-                <Ionicons
+              ]}
+              onPress={() => handleLikePost(item.id)}
+            >
+              <Ionicons
                 name={
                   item.likedBy?.includes(user?.uid)
-                  ? "thumbs-up"
-                  : "thumbs-up-outline"
+                    ? "thumbs-up"
+                    : "thumbs-up-outline"
                 }
                 size={16}
                 color={
                   item.likedBy?.includes(user?.uid)
-                  ? Colors[theme].background // Icon color for liked state
-                  : Colors[theme].text // Default icon color
+                    ? Colors[theme].background // Icon color for liked state
+                    : Colors[theme].text // Default icon color
                 }
-                />
+              />
               <Text
                 style={[
                   styles.ovalText,
@@ -248,7 +248,10 @@ const HomeScreen = () => {
               style={[
                 styles.actionButton,
                 styles.ovalContainer,
-                { backgroundColor: Colors[theme].tint },
+                { 
+                  backgroundColor: Colors[theme].tint,
+                  marginLeft: 10, // Added marginLeft for comment oval
+                },
               ]}
               onPress={() => handleChat(item.id)}
             >
