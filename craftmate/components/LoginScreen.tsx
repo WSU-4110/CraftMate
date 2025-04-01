@@ -9,8 +9,6 @@ import { useColorScheme } from "react-native";
 import { Colors } from "../constants/Colors";
 import { Link } from "expo-router";
 import styles from "./LoginScreen.styles";
-import * as ImageManipulator from "expo-image-manipulator";
-import * as FileSystem from 'expo-file-system';
 
 const PRESET_TAGS = [
   "Cars",
@@ -83,8 +81,6 @@ export default function LoginScreen() {
         password
       );
       const user = userCredential.user;
-      const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, { isActive: true });
       Toast.show({
         type: "success",
         text1: "Welcome",
@@ -98,63 +94,21 @@ export default function LoginScreen() {
   };
 
   const handleSignOut = async () => {
-    if (!user) return;
-    const userRef = doc(db, "users", user.uid);
-    await updateDoc(userRef, { isActive: false });
     await signOut(auth);
     setUser(null);
     setProfile({ name: "", bio: "", profileImage: "", tags: [] });
     Toast.show({ type: "success", text1: "Signed Out" });
   };
 
-  const uriToBase64 = async (uri: string): Promise<string> => {
-    try {
-      const base64 = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-      const fileExtension = uri.split('.').pop()?.toLowerCase() || 'jpg';
-      const mimeType = fileExtension === 'png' ? 'image/png' : 'image/jpeg';
-      return `data:${mimeType};base64,${base64}`;
-    } catch (error) {
-      console.error('Error converting image to base64:', error);
-      return '';
-    }
-  };
-
   const handlePickImage = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 1,
-      });
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        // Resize and compress the image
-        const resizedImage = await ImageManipulator.manipulateAsync(
-          result.assets[0].uri,
-          [{ resize: { width: 500 } }], // Resize to a width of 500px
-          { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG } // Compress and save as JPEG
-        );
-
-        // Convert the resized image to base64
-        const base64Image = await uriToBase64(resizedImage.uri);
-
-        // Update the profile with the resized base64 image
-        await updateProfile({ profileImage: base64Image });
-
-        Toast.show({ type: "success", text1: "Profile image updated!" });
-      } else {
-        Toast.show({ type: "info", text1: "No image selected" });
-      }
-    } catch (error: any) {
-      console.error("Error picking image:", error);
-      Toast.show({
-        type: "error",
-        text1: "Upload Failed",
-        text2: error.message || "Unknown error occurred",
-      });
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+    if (!result.canceled) {
+      await updateProfile({ profileImage: result.assets[0].uri });
     }
   };
 
@@ -165,9 +119,9 @@ export default function LoginScreen() {
 
   const toggleTag = async (tag: string) => {
     if (!user) return;
-    const tags = (profile.tags || []).includes(tag)
-      ? (profile.tags || []).filter((t) => t !== tag)
-      : [...(profile.tags || []), tag];
+    const tags = profile.tags.includes(tag)
+      ? profile.tags.filter((t) => t !== tag)
+      : [...profile.tags, tag];
     await updateProfile({ tags });
   };
 
@@ -175,8 +129,8 @@ export default function LoginScreen() {
     Alert.prompt("New Tag", "Enter custom tag", async (tag) => {
       if (!tag) return;
       const trimmed = tag.trim();
-      if (!trimmed || (profile.tags || []).includes(trimmed)) return;
-      await updateProfile({ tags: [...(profile.tags || []), trimmed] });
+      if (!trimmed || profile.tags.includes(trimmed)) return;
+      await updateProfile({ tags: [...profile.tags, trimmed] });
     });
   };
 
@@ -193,14 +147,12 @@ export default function LoginScreen() {
         <TouchableOpacity onPress={handlePickImage}>
           <Image
             source={{
-              uri: profile.profileImage.startsWith('data:image/')
-                ? profile.profileImage // Base64 string
-                : profile.profileImage || "https://via.placeholder.com/150", // URI or placeholder
+              uri: profile.profileImage || "https://via.placeholder.com/150",
             }}
             style={{
-              width: 120, // Adjusted size
-              height: 120, // Adjusted size
-              borderRadius: 60, // Circular shape
+              width: 120,
+              height: 120,
+              borderRadius: 60,
               alignSelf: "center",
               marginBottom: 15,
               borderWidth: 2,
@@ -241,56 +193,12 @@ export default function LoginScreen() {
         </View>
 
         {/* Tags UI */}
-        <Text style={[styles.radioText, { marginTop: 20, color: Colors[theme].text }]}>
-          Tags:
-        </Text>
+        <Text style={[styles.radioText, { marginTop: 20, color: Colors[theme].text }]}>Tags:</Text>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-          {[
-            ...new Set([
-              ...PRESET_TAGS,
-              ...(profile.tags || []).filter((t) => !PRESET_TAGS.includes(t)),
-            ]),
-            "+",
-          ].map((tag) => (
+          {[...new Set([...PRESET_TAGS, ...profile.tags.filter(t => !PRESET_TAGS.includes(t))]), "+"].map((tag) => (
             <TouchableOpacity
               key={tag}
               onPress={() => (tag === "+" ? addCustomTag() : toggleTag(tag))}
-              style={{
-                backgroundColor:
-                  tag === "+"
-                    ? Colors[theme].inputBackground
-                    : (profile.tags || []).includes(tag)
-                    ? "#E89600"
-                    : Colors[theme].inputBackground,
-                paddingVertical: 8,
-                paddingHorizontal: tag === "+" ? 12 : 14,
-                borderRadius: 20,
-                marginVertical: 4,
-                borderWidth: 1,
-                borderColor: tag === "+" ? "#aaa" : "transparent",
-              }}
-            >
-              <Text
-                style={{
-                  color:
-                    tag === "+"
-                      ? "#aaa"
-                      : (profile.tags || []).includes(tag)
-                      ? "#fff"
-                      : textColor,
-                }}
-              >
-                {tag}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <Text style={[styles.radioText, { marginTop: 20, color: Colors[theme].text }]}>Selected Tags:</Text>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-          {profile.tags.map((tag, i) => (
-            <View
-              key={i}
               style={{
                 backgroundColor: tag === "+" ? Colors[theme].inputBackground : profile.tags.includes(tag) ? "#E89600" : Colors[theme].inputBackground,
                 paddingVertical: 8,
@@ -345,7 +253,7 @@ export default function LoginScreen() {
       <View style={styles.footer}>
         <Text style={[styles.footerText, { color: Colors[theme].text }]} >
           Don't have an account?
-          <Link href="../pages/signup" style={styles.footerLink}>
+          <Link href="../auth/signup" style={styles.footerLink}>
             {" "}
             Sign Up
           </Link>
