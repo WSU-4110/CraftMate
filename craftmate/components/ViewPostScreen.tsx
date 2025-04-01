@@ -6,15 +6,17 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  FlatList, // Add FlatList import
+  Dimensions, // Add Dimensions import
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useColorScheme } from "react-native";
 import { Colors } from "../constants/Colors";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
 import { db } from "../constants/firebaseConfig";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { getAuth } from "firebase/auth";
 import styles from "./ViewPostScreen.styles"; // Import styles
-
 interface Post {
   username: string;
   postTitle: string;
@@ -25,6 +27,7 @@ interface Post {
   comments: number;
   images?: string[];
   tags?: string[];
+  likedBy?: string[];
 }
 
 export default function ViewPostScreen() {
@@ -35,6 +38,8 @@ export default function ViewPostScreen() {
 
   const [post, setPost] = useState<Post | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeIndex, setActiveIndex] = useState(0); // Track the active image index
+  const [currentUser, setCurrentUser] = useState<any>(null); // Add state for current user
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -57,8 +62,68 @@ export default function ViewPostScreen() {
       }
     };
 
+    const fetchCurrentUser = () => {
+      const auth = getAuth();
+      setCurrentUser(auth.currentUser); // Retrieve and set the current user
+    };
+
     fetchPost();
+    fetchCurrentUser(); // Fetch the current user
   }, [postId]);
+
+  const handleLikePost = async () => {
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser; // Retrieve the current user
+
+      if (!user) {
+        Alert.alert("Error", "You must be logged in to perform this action."); // Handle user not logged in
+        return;
+      }
+
+      if (!post) return;
+
+      const postRef = doc(db, "posts", postId);
+      const postDoc = await getDoc(postRef);
+
+      if (!postDoc.exists()) {
+        console.error("Post does not exist.");
+        return;
+      }
+
+      const postData = postDoc.data();
+      const likedBy = postData?.likedBy || [];
+
+      // Optimistically update the UI
+      if (likedBy.includes(user.uid)) {
+        setPost({
+          ...post,
+          likes: post.likes - 1,
+          likedBy: post.likedBy?.filter((uid) => uid !== user.uid),
+        });
+        await updateDoc(postRef, {
+          likes: increment(-1),
+          likedBy: likedBy.filter((uid: string) => uid !== user.uid),
+        });
+      } else {
+        setPost({
+          ...post,
+          likes: post.likes + 1,
+          likedBy: [...(post.likedBy || []), user.uid],
+        });
+        await updateDoc(postRef, {
+          likes: increment(1),
+          likedBy: [...likedBy, user.uid],
+        });
+      }
+    } catch (error) {
+      console.error("Error liking post:", error);
+    }
+  };
+
+  const handleCommentPress = () => {
+    Alert.alert("Comment functionality not implemented");
+  };
 
   if (isLoading) {
     return (
@@ -146,7 +211,7 @@ export default function ViewPostScreen() {
           <View style={styles.tagsContainer}>
             {post.tags.map((tag, index) => (
               <View key={index} style={styles.tag}>
-                <Text style={[styles.tagText, { color: Colors[theme].text }]}>
+                <Text style={[styles.tagText, { color: Colors[theme].background }]}>
                   {tag}
                 </Text>
               </View>
@@ -159,15 +224,33 @@ export default function ViewPostScreen() {
         </Text>
 
         {post.images && post.images.length > 0 && (
-          <ScrollView horizontal style={styles.imageContainer}>
-            {post.images.map((imageData, index) => (
-              <Image
-                key={index}
-                source={getImageSource(imageData)}
-                style={styles.postImage}
-              />
-            ))}
-          </ScrollView>
+          <View style={styles.imageSliderContainer}>
+            <FlatList
+              data={post.images}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item, index) => index.toString()}
+              onScroll={(event) => {
+                const index = Math.round(
+                  event.nativeEvent.contentOffset.x /
+                    (Dimensions.get("window").width - 40) // Ensure Dimensions is used here
+                );
+                setActiveIndex(index); // Update the active index on scroll
+              }}
+              renderItem={({ item, index }) => (
+                <Image
+                  source={getImageSource(item)}
+                  style={[
+                    styles.sliderImage,
+                    {
+                      borderRadius: index === 0 || index === post.images!.length - 1 ? 10 : 0, // Round only outer edges
+                    },
+                  ]}
+                />
+              )}
+            />
+          </View>
         )}
 
         <View
@@ -182,7 +265,7 @@ export default function ViewPostScreen() {
           <Text
             style={[
               styles.postBody,
-              { color: Colors[theme].postText, fontWeight: "bold" },
+              { color: Colors[theme].postText },
             ]}
           >
             {post.postBody}
@@ -194,16 +277,37 @@ export default function ViewPostScreen() {
                 style={[
                   styles.actionButton,
                   styles.ovalContainer,
-                  { backgroundColor: Colors[theme].tint },
+                  {
+                    backgroundColor: post?.likedBy?.includes(currentUser?.uid) // Use currentUser
+                      ? "#E89600" // Highlighted color for liked state
+                      : Colors[theme].tint, // Default color
+                  },
                 ]}
-                onPress={() => Alert.alert("Like functionality not implemented")}
+                onPress={handleLikePost}
               >
                 <Ionicons
-                  name="thumbs-up-outline"
+                  name={
+                    post?.likedBy?.includes(currentUser?.uid) // Use currentUser
+                      ? "thumbs-up"
+                      : "thumbs-up-outline"
+                  }
                   size={16}
-                  color={Colors[theme].text}
+                  color={
+                    post?.likedBy?.includes(currentUser?.uid) // Use currentUser
+                      ? Colors[theme].background // Icon color for liked state
+                      : Colors[theme].text // Default icon color
+                  }
                 />
-                <Text style={[styles.ovalText, { color: Colors[theme].text }]}>
+                <Text
+                  style={[
+                    styles.ovalText,
+                    {
+                      color: post?.likedBy?.includes(currentUser?.uid) // Use currentUser
+                        ? Colors[theme].background // Text color for liked state
+                        : Colors[theme].text, // Default text color
+                    },
+                  ]}
+                >
                   {post.likes}
                 </Text>
               </TouchableOpacity>
@@ -214,7 +318,7 @@ export default function ViewPostScreen() {
                   styles.ovalContainer,
                   { backgroundColor: Colors[theme].tint },
                 ]}
-                onPress={() => Alert.alert("Comment functionality not implemented")}
+                onPress={handleCommentPress}
               >
                 <Ionicons
                   name="chatbubble-outline"

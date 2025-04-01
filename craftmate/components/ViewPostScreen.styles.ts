@@ -96,6 +96,21 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 10,
   },
+  imageSliderContainer: {
+    marginVertical: 10,
+    height: 200, // Adjust height as needed
+  },
+  sliderImage: {
+    width: Dimensions.get("window").width - 40, // Full width for single image
+    height: "100%",
+    borderRadius: 10, // Default rounded corners
+  },
+  sliderImageActive: {
+    borderRadius: 10, // Rounded corners for the active image
+  },
+  sliderImageInactive: {
+    borderRadius: 0, // Straight edges for adjacent images
+  },
   tagsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -103,7 +118,7 @@ const styles = StyleSheet.create({
     marginBottom: -10,
   },
   tag: {
-    backgroundColor: "#e0e0e0",
+    backgroundColor: "#E89600",
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -123,7 +138,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   actionButton: {
-    marginLeft: 10,
   },
   ovalContainer: {
     flexDirection: "row",
@@ -132,7 +146,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    marginLeft: 10,
+    marginRight: 10,
   },
   ovalText: {
     marginLeft: 5,

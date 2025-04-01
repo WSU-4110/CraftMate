@@ -98,7 +98,7 @@ const HomeScreen = () => {
       const user = auth.currentUser;
 
       if (!user) {
-        alert("You must be logged in to like a post.");
+        Alert.alert("Error", "You must be logged in to perform this action."); // Handle user not logged in
         return;
       }
 
@@ -115,14 +115,12 @@ const HomeScreen = () => {
 
       // Check if the user has already liked the post
       if (likedBy.includes(user.uid)) {
-        // User has already liked the post, so decrement the like count
         await updateDoc(postRef, {
           likes: increment(-1),
           likedBy: likedBy.filter((uid: string) => uid !== user.uid),
         });
         console.log("Like removed successfully!");
       } else {
-        // User has not liked the post, so increment the like count
         await updateDoc(postRef, {
           likes: increment(1),
           likedBy: [...likedBy, user.uid],
