@@ -40,7 +40,8 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
     textAlign: "left",
-    marginVertical: 10,
+    marginTop: 1,
+    marginBottom: 10,
     // Removed paddingHorizontal
   },
   postContainer: {
@@ -121,6 +122,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 4,
     marginRight: 8,
+    marginBottom: 8,
   },
   tagText: {
     fontSize: 14,
