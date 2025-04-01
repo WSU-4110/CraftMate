@@ -139,6 +139,10 @@ const HomeScreen = () => {
     router.push(`/post/${postId}`);
   };
 
+  const navigateToPost = (postId: string) => {
+    router.push(`/post/${postId}`);
+  };
+
   const filteredPosts = searchQuery
     ? posts.filter((post) =>
         (post.postTitle?.toLowerCase().includes(searchQuery.toLowerCase()) || // Check postTitle
@@ -148,115 +152,121 @@ const HomeScreen = () => {
     : posts;
 
   const renderItem = ({ item }: { item: Post }) => {
-    // Convert Firestore Timestamp to JavaScript Date if necessary
     const postDate =
       item.timestamp instanceof Date
         ? item.timestamp
         : item.timestamp?.toDate?.() || new Date(item.timestamp);
 
     return (
-      <Link href={`/post/${item.id}`} style={{ textDecorationLine: 'none' }}>
-        <TouchableOpacity>
-          <View
-            style={[
-              styles.postContainer,
-              {
-                backgroundColor: Colors[theme].background,
-                borderColor: Colors[theme].text,
-              },
-            ]}
-          >
-            <View style={styles.postHeader}>
-              <View style={styles.postHeaderLeft}>
-                <Image
-                  source={
-                    item.profileImage
-                      ? { uri: item.profileImage }
-                      : require('../assets/images/PortraitPlaceholder.png')
-                  }
-                  style={styles.profileImage}
-                />
-                <Text
-                  style={[styles.postUsername, { color: Colors[theme].text }]}
-                >
-                  {item.username}
-                </Text>
-              </View>
+      <View
+        style={[
+          styles.postContainer,
+          {
+            backgroundColor: Colors[theme].background,
+            borderColor: Colors[theme].text,
+          },
+        ]}
+      >
+        <TouchableOpacity onPress={() => navigateToPost(item.id)}>
+          <View style={styles.postHeader}>
+            <View style={styles.postHeaderLeft}>
+              <Image
+                source={
+                  item.profileImage
+                    ? { uri: item.profileImage }
+                    : require('../assets/images/PortraitPlaceholder.png')
+                }
+                style={styles.profileImage}
+              />
               <Text
-                style={[styles.postTimestamp, { color: Colors[theme].text }]}
+                style={[styles.postUsername, { color: Colors[theme].text }]}
               >
-                {postDate.toLocaleDateString()}
+                {item.username}
               </Text>
             </View>
             <Text
-              style={[
-                styles.postContent,
-                { color: Colors[theme].postText, fontWeight: "bold" }, // Make postTitle bold
-              ]}
+              style={[styles.postTimestamp, { color: Colors[theme].text }]}
             >
-              {item.postTitle}
+              {postDate.toLocaleDateString()}
             </Text>
-            {item.images && item.images.length > 0 && (
-              <Image source={{ uri: item.images[0] }} style={styles.postImage} />
-            )}
-            <View style={styles.postFooter}>
-              <View style={styles.postActions}>
-                {/* Like Button */}
-                <TouchableOpacity
-                  style={[
-                    styles.actionButton,
-                    styles.ovalContainer,
-                    { backgroundColor: Colors[theme].tint },
-                  ]}
-                  onPress={(e) => {
-                    e.stopPropagation(); // Prevent parent touch interception
-                    handleLikePost(item.id);
-                  }}
-                >
-                  <Ionicons
-                    name={
-                      item.likedBy?.includes(user?.uid)
-                        ? "thumbs-up"
-                        : "thumbs-up-outline"
-                    }
-                    size={16}
-                    color={Colors[theme].icon}
-                  />
-                  <Text
-                    style={[styles.ovalText, { color: Colors[theme].icon }]}
-                  >
-                    {item.likes}
-                  </Text>
-                </TouchableOpacity>
-
-                {/* Comment Button */}
-                <TouchableOpacity
-                  style={[
-                    styles.actionButton,
-                    styles.ovalContainer,
-                    { backgroundColor: Colors[theme].tint },
-                  ]}
-                  onPress={(e) => {
-                    e.stopPropagation(); // Prevent parent touch interception
-                    handleChat(item.id);
-                  }}
-                >
-                  <Ionicons
-                    name="chatbubble-outline"
-                    size={16}
-                    color={Colors[theme].icon}
-                  />
-                  <Text
-                    style={[styles.ovalText, { color: Colors[theme].icon }]}
-                  >
-                    {item.comments || 0}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
           </View>
+          <Text
+            style={[
+              styles.postContent,
+              { color: Colors[theme].postText, fontWeight: 'bold' },
+            ]}
+          >
+            {item.postTitle}
+          </Text>
+          {item.images && item.images.length > 0 && (
+            <Image source={{ uri: item.images[0] }} style={styles.postImage} />
+          )}
         </TouchableOpacity>
-      </Link>
+        <View style={styles.postFooter}>
+          <View style={styles.postActions}>
+            {/* Like Button */}
+            <TouchableOpacity
+              style={[
+                styles.actionButton,
+                styles.ovalContainer,
+                {
+                  backgroundColor: item.likedBy?.includes(user?.uid)
+                    ? "#E89600" // Highlighted color for liked state
+                    : Colors[theme].tint, // Default color
+                },
+                ]}
+                onPress={() => handleLikePost(item.id)}
+              >
+                <Ionicons
+                name={
+                  item.likedBy?.includes(user?.uid)
+                  ? "thumbs-up"
+                  : "thumbs-up-outline"
+                }
+                size={16}
+                color={
+                  item.likedBy?.includes(user?.uid)
+                  ? Colors[theme].background // Icon color for liked state
+                  : Colors[theme].text // Default icon color
+                }
+                />
+              <Text
+                style={[
+                  styles.ovalText,
+                  {
+                    color: item.likedBy?.includes(user?.uid)
+                      ? Colors[theme].background // Text color for liked state
+                      : Colors[theme].text, // Default text color
+                  },
+                ]}
+              >
+                {item.likes}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Comment Button */}
+            <TouchableOpacity
+              style={[
+                styles.actionButton,
+                styles.ovalContainer,
+                { backgroundColor: Colors[theme].tint },
+              ]}
+              onPress={() => handleChat(item.id)}
+            >
+              <Ionicons
+                name="chatbubble-outline"
+                size={16}
+                color={Colors[theme].text}
+              />
+              <Text
+                style={[styles.ovalText, { color: Colors[theme].text }]}
+              >
+                {item.comments || 0}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
     );
   };
 

@@ -212,11 +212,20 @@ export default function WritePost() {
         <TouchableOpacity
           style={[
             styles.addTagsButton,
-            { backgroundColor: Colors[theme].tint }, // Dynamic background color
+            {
+              backgroundColor: isTagMenuVisible ? "#E89600" : Colors[theme].tint, // Dynamic background color
+            },
           ]}
           onPress={toggleTagMenu}
         >
-          <Text style={[styles.addTagsButtonText, { color: Colors[theme].text }]}>
+          <Text
+            style={[
+              styles.addTagsButtonText,
+              {
+          color: isTagMenuVisible ? Colors[theme].background : Colors[theme].text, // Dynamic text color
+              },
+            ]}
+          >
             Add Tags
           </Text>
         </TouchableOpacity>
