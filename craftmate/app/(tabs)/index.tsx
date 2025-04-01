@@ -100,10 +100,10 @@ const HomeScreen = () => {
         />
 
         <FlatList
-          data={posts.filter((post) =>
-            post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            post.username.toLowerCase().includes(searchQuery.toLowerCase())
-          )}
+  data={posts.filter((post) =>
+    (post?.content || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (post?.username || "").toLowerCase().includes(searchQuery.toLowerCase())
+  )}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}

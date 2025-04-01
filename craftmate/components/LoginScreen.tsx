@@ -1,13 +1,5 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Image,
-  ScrollView,
-  Alert,
-} from "react-native";
+import React, { useState, useEffect } from "react"; // Removed useRef as it's not needed now
+import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, Alert } from "react-native";
 import { signInWithEmailAndPassword, signOut, User } from "firebase/auth";
 import { auth, db } from "../constants/firebaseConfig";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
@@ -35,10 +27,11 @@ export default function LoginScreen() {
     name: "",
     bio: "",
     profileImage: "",
-    tags: [] as string[],
+    tags: [] as string[], // Default to an empty array
   });
   const [editingBio, setEditingBio] = useState(false);
   const [bioText, setBioText] = useState("");
+
   const theme = useColorScheme() || "light";
 
   useEffect(() => {
@@ -58,7 +51,10 @@ export default function LoginScreen() {
     const userSnap = await getDoc(userRef);
     if (userSnap.exists()) {
       const data = userSnap.data() as any;
-      setProfile(data);
+      setProfile({
+        ...data,
+        tags: data.tags || [], // Ensure tags is always an array
+      });
       setBioText(data.bio || "");
     }
   };
@@ -140,17 +136,13 @@ export default function LoginScreen() {
 
   const textColor = theme === "dark" ? "#fff" : "#000";
 
+  // Render UI when user is logged in
   if (user) {
     return (
       <ScrollView
-        contentContainerStyle={[
-          styles.container,
-          { backgroundColor: Colors[theme].background },
-        ]}
+        contentContainerStyle={[styles.container, { backgroundColor: Colors[theme].background }]}
       >
-        <Text style={[styles.title, { color: Colors[theme].text }]}>
-          Profile
-        </Text>
+        <Text style={[styles.title, { color: Colors[theme].text }]}>Profile</Text>
 
         <TouchableOpacity onPress={handlePickImage}>
           <Image
@@ -169,118 +161,72 @@ export default function LoginScreen() {
           />
         </TouchableOpacity>
 
-        <Text style={[styles.text, { color: Colors[theme].text }]}>
-          Name: {profile.name}
-        </Text>
-        <Text style={[styles.text, { color: Colors[theme].text }]}>
-          Email: {user.email}
-        </Text>
+        <Text style={[styles.text, { color: Colors[theme].text }]}>Name: {profile.name}</Text>
+        <Text style={[styles.text, { color: Colors[theme].text }]}>Email: {user.email}</Text>
 
-        <View style={{ marginVertical: 10 }}>
+        {/* Bio Editing */}
+        <View style={styles.bioContainer}>
           {editingBio ? (
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: Colors[theme].inputBackground,
-                  color: Colors[theme].text,
-                },
-              ]}
-              value={bioText}
-              onChangeText={setBioText}
-              onSubmitEditing={handleBioSubmit}
-              onBlur={handleBioSubmit}
-              autoFocus
-            />
+            <>
+              <TextInput
+                style={[styles.input, { color: Colors[theme].text }]}
+                value={bioText}
+                onChangeText={setBioText}
+                multiline
+                placeholder="Edit your bio"
+                placeholderTextColor={Colors[theme].icon}
+              />
+              <TouchableOpacity style={styles.button} onPress={handleBioSubmit}>
+                <Text style={styles.buttonText}>Save Bio</Text>
+              </TouchableOpacity>
+            </>
           ) : (
-            <TouchableOpacity onPress={() => setEditingBio(true)}>
-              <Text
-                style={[
-                  styles.text,
-                  {
-                    paddingVertical: 10,
-                    paddingHorizontal: 15,
-                    borderRadius: 6,
-                    borderColor: Colors[theme].icon,
-                    borderWidth: 1,
-                    color: Colors[theme].text,
-                  },
-                ]}
-              >
-                {profile.bio || "Tap to add a bio"}
+            <>
+              <Text style={[styles.text, { color: Colors[theme].text }]}>
+                Bio: {profile.bio || "No bio available."}
               </Text>
-            </TouchableOpacity>
+              <TouchableOpacity style={styles.button} onPress={() => setEditingBio(true)}>
+                <Text style={styles.buttonText}>Edit Bio</Text>
+              </TouchableOpacity>
+            </>
           )}
         </View>
 
-        <Text style={[styles.radioText, { marginTop: 20, color: Colors[theme].text }]}>
-  Tags:
-</Text>
-<View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-  {[
-    ...new Set([...PRESET_TAGS, ...profile.tags.filter(t => !PRESET_TAGS.includes(t))]),
-    "+"
-  ].map((tag) => (
-    <TouchableOpacity
-      key={tag}
-      onPress={() => (tag === "+" ? addCustomTag() : toggleTag(tag))}
-      style={{
-        backgroundColor:
-          tag === "+"
-            ? Colors[theme].inputBackground
-            : profile.tags.includes(tag)
-            ? "#E89600"
-            : Colors[theme].inputBackground,
-        paddingVertical: 8,
-        paddingHorizontal: tag === "+" ? 12 : 14,
-        borderRadius: 20,
-        marginVertical: 4,
-        borderWidth: 1,
-        borderColor: tag === "+" ? "#aaa" : "transparent",
-      }}
-    >
-      <Text
-        style={{
-          color:
-            tag === "+"
-              ? "#aaa"
-              : profile.tags.includes(tag)
-              ? "#fff"
-              : textColor,
-        }}
-      >
-        {tag}
-      </Text>
-    </TouchableOpacity>
-  ))}
-</View>
-
-
-        <Text style={[styles.radioText, { marginTop: 20, color: Colors[theme].text }]}>Selected Tags:</Text>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-          {profile.tags.map((tag, i) => (
-            <View
-              key={i}
+        {/* Tags UI */}
+        <Text style={[styles.radioText, { marginTop: 20, color: Colors[theme].text }]}>Tags:</Text>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+          {[...new Set([...PRESET_TAGS, ...profile.tags.filter(t => !PRESET_TAGS.includes(t))]), "+"].map((tag) => (
+            <TouchableOpacity
+              key={tag}
+              onPress={() => (tag === "+" ? addCustomTag() : toggleTag(tag))}
               style={{
-                backgroundColor: "#E89600",
-                paddingHorizontal: 10,
-                paddingVertical: 6,
-                borderRadius: 15,
-                marginTop: 4,
+                backgroundColor: tag === "+" ? Colors[theme].inputBackground : profile.tags.includes(tag) ? "#E89600" : Colors[theme].inputBackground,
+                paddingVertical: 8,
+                paddingHorizontal: tag === "+" ? 12 : 14,
+                borderRadius: 20,
+                marginVertical: 4,
+                borderWidth: 1,
+                borderColor: tag === "+" ? "#aaa" : "transparent",
               }}
             >
-              <Text style={{ color: "#fff" }}>{tag}</Text>
-            </View>
+              <Text style={{
+                color: tag === "+" ? "#aaa" : profile.tags.includes(tag) ? "#fff" : textColor,
+              }}>
+                {tag}
+              </Text>
+            </TouchableOpacity>
           ))}
         </View>
 
-        <TouchableOpacity style={styles.button} onPress={handleSignOut}>
+        {/* Sign Out Button */}
+        <TouchableOpacity style={[styles.button, { position: "absolute", bottom: 20, left: 0, right: 0 }]} onPress={handleSignOut}>
           <Text style={styles.buttonText}>Sign Out</Text>
         </TouchableOpacity>
       </ScrollView>
     );
   }
 
+  // Render UI when the user is not logged in
   return (
     <View
       style={[styles.container, { backgroundColor: Colors[theme].background }]}
@@ -305,7 +251,7 @@ export default function LoginScreen() {
         <Text style={styles.buttonText}>Log In</Text>
       </TouchableOpacity>
       <View style={styles.footer}>
-        <Text style={[styles.footerText, { color: Colors[theme].text }]}>
+        <Text style={[styles.footerText, { color: Colors[theme].text }]} >
           Don't have an account?
           <Link href="../auth/signup" style={styles.footerLink}>
             {" "}

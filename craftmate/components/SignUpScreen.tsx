@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth"; // Import sendEmailVerification
 import { doc, setDoc } from "firebase/firestore";
 import { Link, useRouter } from "expo-router";
 import { auth, db } from "../constants/firebaseConfig";
@@ -16,7 +16,7 @@ export default function SignUpScreen() {
   const [username, setUsername] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [isProfessional, setIsProfessional] = useState(false); // false by defaut
+  const [isProfessional, setIsProfessional] = useState(false); // false by default
   const theme = useColorScheme() || 'light'; // fallback to light theme
   const router = useRouter(); // used to navigate
 
@@ -44,6 +44,9 @@ export default function SignUpScreen() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
+      // Send email verification
+      await sendEmailVerification(user);
+
       // add user's info to firestore
       const userRef = doc(db, 'users', user.uid);
       await setDoc(userRef, {
@@ -59,7 +62,7 @@ export default function SignUpScreen() {
         isProfessional,
       });
 
-      Alert.alert("Success", `Welcome, ${username}!`);
+      Alert.alert("Success", `Welcome, ${username}! Verification email sent.`);
 
       // go back to main screen after signup
       router.replace("/(tabs)");
