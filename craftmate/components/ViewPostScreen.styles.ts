@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
   },
   postBody: {
     fontSize: 16,
-    marginBottom: 10,
+    marginBottom: 8,
   },
   imageContainer: {
     marginBottom: 16,
@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   imageSliderContainer: {
-    marginVertical: 10,
+    marginVertical: 4,
     height: 200, // Adjust height as needed
   },
   sliderImage: {
@@ -114,8 +114,6 @@ const styles = StyleSheet.create({
   tagsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginTop: 10,
-    marginBottom: -10,
   },
   tag: {
     backgroundColor: "#E89600",
@@ -123,7 +121,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 4,
     marginRight: 8,
-    marginBottom: 8,
   },
   tagText: {
     fontSize: 14,

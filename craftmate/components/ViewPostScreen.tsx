@@ -200,9 +200,13 @@ export default function ViewPostScreen() {
         
         {/* Timestamp positioned absolutely to the right */}
         <Text style={[styles.timestamp, { color: Colors[theme].text }]}>
-          {post.timestamp
-            ? new Date(post.timestamp).toLocaleDateString() // Display date like in HomeScreen
-            : "No date"}
+          {(() => {
+            const postDate =
+              post.timestamp instanceof Date
+                ? post.timestamp
+                : post.timestamp?.toDate?.() || new Date(post.timestamp); // Ensure proper conversion
+            return postDate.toLocaleDateString();
+          })()}
         </Text>
       </View>
       
