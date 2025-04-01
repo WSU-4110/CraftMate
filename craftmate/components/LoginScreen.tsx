@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from "react"; // Removed useRef as it's not needed now
+import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, Alert } from "react-native";
 import { signInWithEmailAndPassword, signOut, User } from "firebase/auth";
 import { auth, db } from "../constants/firebaseConfig";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
 import * as ImagePicker from "expo-image-picker";
 import Toast from "react-native-toast-message";
 import { useColorScheme } from "react-native";
 import { Colors } from "../constants/Colors";
 import { Link } from "expo-router";
 import styles from "./LoginScreen.styles";
+import * as ImageManipulator from "expo-image-manipulator";
+import * as FileSystem from 'expo-file-system';
 
 const PRESET_TAGS = [
   "Cars",
@@ -19,6 +21,20 @@ const PRESET_TAGS = [
   "Tools",
 ];
 
+const uriToBase64 = async (uri: string): Promise<string> => {
+  try {
+    const base64 = await FileSystem.readAsStringAsync(uri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    const fileExtension = uri.split('.').pop()?.toLowerCase() || 'jpg';
+    const mimeType = fileExtension === 'png' ? 'image/png' : 'image/jpeg';
+    return `data:${mimeType};base64,${base64}`;
+  } catch (error) {
+    console.error('Error converting image to base64:', error);
+    return '';
+  }
+};
+
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,7 +43,8 @@ export default function LoginScreen() {
     name: "",
     bio: "",
     profileImage: "",
-    tags: [] as string[], // Default to an empty array
+    tags: [] as string[],
+    isActive: false, // Add isActive to the local state
   });
   const [editingBio, setEditingBio] = useState(false);
   const [bioText, setBioText] = useState("");
@@ -39,6 +56,8 @@ export default function LoginScreen() {
       if (user) {
         setUser(user);
         await fetchUserProfile(user.uid);
+        // Update isActive status when user logs in
+        await updateIsActiveStatus(user.uid, true);
       } else {
         setUser(null);
       }
@@ -47,15 +66,25 @@ export default function LoginScreen() {
   }, []);
 
   const fetchUserProfile = async (uid: string) => {
-    const userRef = doc(db, "users", uid);
-    const userSnap = await getDoc(userRef);
-    if (userSnap.exists()) {
-      const data = userSnap.data() as any;
-      setProfile({
-        ...data,
-        tags: data.tags || [], // Ensure tags is always an array
-      });
-      setBioText(data.bio || "");
+    try {
+      const userRef = doc(db, "users", uid);
+      const userSnap = await getDoc(userRef);
+      
+      if (userSnap.exists()) {
+        const data = userSnap.data() as any;
+        setProfile({
+          ...data,
+          tags: data.tags || [],
+          isActive: data.isActive || false, // Ensure isActive is included in profile state
+        });
+        setBioText(data.bio || "");
+      } else {
+        // Handle case where user doc doesn't exist yet
+        console.log("No user profile document exists yet");
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      Toast.show({ type: "error", text1: "Failed to load profile" });
     }
   };
 
@@ -64,13 +93,39 @@ export default function LoginScreen() {
       profileImage: string;
       bio: string;
       tags: string[];
+      isActive: boolean;
     }>
   ) => {
     if (!user) return;
-    const userRef = doc(db, "users", user.uid);
-    await updateDoc(userRef, updates);
-    setProfile((prev) => ({ ...prev, ...updates }));
-    Toast.show({ type: "success", text1: "Profile Updated" });
+    try {
+      const userRef = doc(db, "users", user.uid);
+      await updateDoc(userRef, updates);
+      setProfile((prev) => ({ ...prev, ...updates }));
+      Toast.show({ type: "success", text1: "Profile Updated" });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      Toast.show({ type: "error", text1: "Failed to update profile" });
+    }
+  };
+
+  const updateIsActiveStatus = async (uid: string, status: boolean) => {
+    try {
+      const userRef = doc(db, "users", uid);
+      const userSnap = await getDoc(userRef);
+      
+      if (userSnap.exists()) {
+        // Document exists, update it
+        await updateDoc(userRef, { isActive: status });
+      } else {
+        // Document doesn't exist, create it with isActive field
+        await setDoc(userRef, { isActive: status });
+      }
+      
+      // Update local state
+      setProfile(prev => ({ ...prev, isActive: status }));
+    } catch (error) {
+      console.error("Error updating active status:", error);
+    }
   };
 
   const handleLogin = async () => {
@@ -88,27 +143,57 @@ export default function LoginScreen() {
       });
       setUser(user);
       await fetchUserProfile(user.uid);
+      // Updated: now handled in onAuthStateChanged
     } catch (error: any) {
       Toast.show({ type: "error", text1: "Login Failed", text2: error.message });
     }
   };
 
   const handleSignOut = async () => {
-    await signOut(auth);
-    setUser(null);
-    setProfile({ name: "", bio: "", profileImage: "", tags: [] });
-    Toast.show({ type: "success", text1: "Signed Out" });
+    if (user) {
+      // Set isActive to false before signing out
+      await updateIsActiveStatus(user.uid, false);
+      await signOut(auth);
+      setUser(null);
+      setProfile({ name: "", bio: "", profileImage: "", tags: [], isActive: false });
+      Toast.show({ type: "success", text1: "Signed Out" });
+    }
   };
 
   const handlePickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
-    if (!result.canceled) {
-      await updateProfile({ profileImage: result.assets[0].uri });
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        // Resize and compress the image
+        const resizedImage = await ImageManipulator.manipulateAsync(
+          result.assets[0].uri,
+          [{ resize: { width: 500 } }], // Resize to a width of 500px
+          { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG } // Compress and save as JPEG
+        );
+
+        // Convert the resized image to base64
+        const base64Image = await uriToBase64(resizedImage.uri);
+
+        // Update the profile with the resized base64 image
+        await updateProfile({ profileImage: base64Image });
+
+        Toast.show({ type: "success", text1: "Profile image updated!" });
+      } else {
+        Toast.show({ type: "info", text1: "No image selected" });
+      }
+    } catch (error: any) {
+      console.error("Error picking image:", error);
+      Toast.show({
+        type: "error",
+        text1: "Upload Failed",
+        text2: error.message || "Unknown error occurred",
+      });
     }
   };
 
@@ -147,12 +232,14 @@ export default function LoginScreen() {
         <TouchableOpacity onPress={handlePickImage}>
           <Image
             source={{
-              uri: profile.profileImage || "https://via.placeholder.com/150",
+              uri: profile.profileImage.startsWith('data:image/')
+                ? profile.profileImage // Base64 string
+                : profile.profileImage || "https://via.placeholder.com/150", // URI or placeholder
             }}
             style={{
-              width: 120,
-              height: 120,
-              borderRadius: 60,
+              width: 120, // Adjusted size
+              height: 120, // Adjusted size
+              borderRadius: 60, // Circular shape
               alignSelf: "center",
               marginBottom: 15,
               borderWidth: 2,
@@ -163,6 +250,7 @@ export default function LoginScreen() {
 
         <Text style={[styles.text, { color: Colors[theme].text }]}>Name: {profile.name}</Text>
         <Text style={[styles.text, { color: Colors[theme].text }]}>Email: {user.email}</Text>
+        <Text style={[styles.text, { color: Colors[theme].text }]}>Status: {profile.isActive ? 'Active' : 'Inactive'}</Text>
 
         {/* Bio Editing */}
         <View style={styles.bioContainer}>
