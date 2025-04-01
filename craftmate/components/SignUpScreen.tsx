@@ -17,6 +17,7 @@ export default function SignUpScreen() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [isProfessional, setIsProfessional] = useState(false); // false by default
+  const [isActive, setIsActive] = useState(false); 
   const theme = useColorScheme() || 'light'; // fallback to light theme
   const router = useRouter(); // used to navigate
 
@@ -60,6 +61,7 @@ export default function SignUpScreen() {
         followers: [],
         following: [],
         isProfessional,
+        isActive,
       });
 
       Alert.alert("Success", `Welcome, ${username}! Verification email sent.`);
