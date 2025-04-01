@@ -11,8 +11,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
-    paddingTop: 40,
-    paddingBottom: 10,
+    paddingTop: 30, // Reduced from 40 to 20 to move the header higher
+    paddingBottom: -10,
   },
   leftPlaceholder: {
     width: 40,
