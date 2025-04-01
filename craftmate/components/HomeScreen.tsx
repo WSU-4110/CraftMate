@@ -98,7 +98,7 @@ const HomeScreen = () => {
       const user = auth.currentUser;
 
       if (!user) {
-        alert("You must be logged in to like a post.");
+        Alert.alert("Error", "You must be logged in to perform this action."); // Handle user not logged in
         return;
       }
 
@@ -115,14 +115,12 @@ const HomeScreen = () => {
 
       // Check if the user has already liked the post
       if (likedBy.includes(user.uid)) {
-        // User has already liked the post, so decrement the like count
         await updateDoc(postRef, {
           likes: increment(-1),
           likedBy: likedBy.filter((uid: string) => uid !== user.uid),
         });
         console.log("Like removed successfully!");
       } else {
-        // User has not liked the post, so increment the like count
         await updateDoc(postRef, {
           likes: increment(1),
           likedBy: [...likedBy, user.uid],
@@ -135,12 +133,11 @@ const HomeScreen = () => {
   };
 
   const handleChat = (postId: string) => {
-    // Navigate to the comments section of the post
-    router.push(`/post/${postId}`);
+    router.push(`../pages/viewpost?postId=${postId}`);
   };
 
   const navigateToPost = (postId: string) => {
-    router.push(`/post/${postId}`);
+    router.push(`../pages/viewpost?postId=${postId}`);
   };
 
   const filteredPosts = searchQuery
@@ -214,22 +211,22 @@ const HomeScreen = () => {
                     ? "#E89600" // Highlighted color for liked state
                     : Colors[theme].tint, // Default color
                 },
-                ]}
-                onPress={() => handleLikePost(item.id)}
-              >
-                <Ionicons
+              ]}
+              onPress={() => handleLikePost(item.id)}
+            >
+              <Ionicons
                 name={
                   item.likedBy?.includes(user?.uid)
-                  ? "thumbs-up"
-                  : "thumbs-up-outline"
+                    ? "thumbs-up"
+                    : "thumbs-up-outline"
                 }
                 size={16}
                 color={
                   item.likedBy?.includes(user?.uid)
-                  ? Colors[theme].background // Icon color for liked state
-                  : Colors[theme].text // Default icon color
+                    ? Colors[theme].background // Icon color for liked state
+                    : Colors[theme].text // Default icon color
                 }
-                />
+              />
               <Text
                 style={[
                   styles.ovalText,
@@ -249,7 +246,10 @@ const HomeScreen = () => {
               style={[
                 styles.actionButton,
                 styles.ovalContainer,
-                { backgroundColor: Colors[theme].tint },
+                { 
+                  backgroundColor: Colors[theme].tint,
+                  marginLeft: 10, // Added marginLeft for comment oval
+                },
               ]}
               onPress={() => handleChat(item.id)}
             >
