@@ -1,18 +1,34 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, Image, FlatList, TouchableOpacity, ScrollView, Button, Platform } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Image,
+  FlatList,
+  TouchableOpacity,
+  ScrollView,
+  Button,
+  Platform,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useColorScheme } from "react-native";
 import { auth, db } from "../../constants/firebaseConfig";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+} from "firebase/firestore";
 import { Colors } from "../../constants/Colors";
-import styles from "../../components/VideoScreen.styles";
-import DateTimePicker from "@react-native-community/datetimepicker"; // Date picker for iOS
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 const categories = [
-  { id: "1", name: "All", icon: "expand-all", color: "red" },
-  { id: "2", name: "Vehicle", icon: "car", color: "orange" },
-  { id: "3", name: "Home", icon: "home", color: "yellow" },
-  { id: "4", name: "Arts", icon: "design-services", color: "blue" },
+  { id: "1", name: "Cars", icon: "car-sport", color: "orange" },
+  { id: "2", name: "Building", icon: "construct", color: "red" },
+  { id: "3", name: "Electricity", icon: "flash", color: "yellow" },
+  { id: "4", name: "Plumbing", icon: "water", color: "cyan" },
+  { id: "5", name: "Painting", icon: "color-palette", color: "beige" },
+  { id: "6", name: "Tools", icon: "hammer", color: "grey" },
 ];
 
 export default function VideoScreen() {
@@ -27,24 +43,25 @@ export default function VideoScreen() {
   const theme = useColorScheme() || "light";
 
   useEffect(() => {
-    const fetchActiveProfessionals = async () => {
-      try {
-        const q = query(collection(db, "users"), where("isProfessional", "==", true));
-        const querySnapshot = await getDocs(q);
-        const professionalUsers = querySnapshot.docs.map((doc) => ({
+    const q = query(collection(db, "users"), where("isProfessional", "==", true));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const professionalUsers = querySnapshot.docs
+        .map((doc) => ({
           id: doc.id,
           ...doc.data(),
-          status: auth.currentUser?.uid === doc.id ? "Online" : "Offline", // Mark current authenticated user as online
-        }));
-        setUsers(professionalUsers);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+        }))
+        .sort((a, b) => {
+          if (a.isActive === b.isActive) {
+            return (a.firstName || "").localeCompare(b.firstName || "");
+          }
+          return a.isActive ? -1 : 1; // Active first
+        });
 
-    fetchActiveProfessionals();
+      setUsers(professionalUsers);
+      setLoading(false);
+    });
+
+    return () => unsubscribe(); // Clean up the listener on unmount
   }, []);
 
   const onDateChange = (event, selectedDate) => {
@@ -66,7 +83,6 @@ export default function VideoScreen() {
       {/* Header */}
       <View style={{ backgroundColor: "#E89600", padding: 20, borderBottomLeftRadius: 20, borderBottomRightRadius: 20 }}>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          {/* Use auth.currentUser?.photoURL for profile image */}
           <Image
             source={{ uri: auth.currentUser?.profileImage || "https://via.placeholder.com/50" }}
             style={{ width: 50, height: 50, borderRadius: 25 }}
@@ -93,9 +109,9 @@ export default function VideoScreen() {
         ))}
       </ScrollView>
 
-      {/* Active Users */}
+      {/* Current Professionals */}
       <View style={{ paddingHorizontal: 15 }}>
-        <Text style={{ fontSize: 18, fontWeight: "bold", color: Colors[theme].text }}>Active Professionals</Text>
+        <Text style={{ fontSize: 18, fontWeight: "bold", color: Colors[theme].text }}>Current Professionals</Text>
         <FlatList
           horizontal
           data={users}
@@ -112,9 +128,23 @@ export default function VideoScreen() {
               }}
               onPress={() => setSelectedProfessional(item)}
             >
-              <Image source={{ uri: item.profileImage || "https://via.placeholder.com/100" }} style={{ width: 100, height: 100, borderRadius: 10 }} />
-              <Text style={{ fontSize: 16, fontWeight: "bold", marginTop: 5, color: "black" }}>{item.firstName}</Text>
-              <Text style={{ fontSize: 14, color: item.status === "Online" ? "green" : "gray" }}>{item.status}</Text>
+              <Image
+                source={{
+                  uri: item.profileImage?.trim()
+                    ? item.profileImage
+                    : "https://via.placeholder.com/100",
+                }}
+                style={{ width: 100, height: 100, borderRadius: 10 }}
+                onError={() =>
+                  console.warn(`Failed to load image for ${item.firstName}: ${item.profileImage}`)
+                }
+              />
+              <Text style={{ fontSize: 16, fontWeight: "bold", marginTop: 5, color: "black" }}>
+                {item.firstName}
+              </Text>
+              <Text style={{ fontSize: 14, color: item.isActive ? "green" : "gray" }}>
+                {item.isActive ? "Online" : "Offline"}
+              </Text>
             </TouchableOpacity>
           )}
         />
@@ -172,7 +202,17 @@ export default function VideoScreen() {
       {/* Request Booking Button */}
       {dateTimeSet && (
         <View style={{ paddingHorizontal: 15, marginTop: 20 }}>
-          <Button title="Request Booking" onPress={() => alert(`Booking requested with ${selectedProfessional.firstName} on ${selectedDate.toLocaleDateString()} at ${selectedTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`)} />
+          <Button
+            title="Request Booking"
+            onPress={() =>
+              alert(
+                `Booking requested with ${selectedProfessional.firstName} on ${selectedDate.toLocaleDateString()} at ${selectedTime.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}`
+              )
+            }
+          />
         </View>
       )}
     </ScrollView>
