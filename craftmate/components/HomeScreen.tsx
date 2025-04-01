@@ -135,12 +135,11 @@ const HomeScreen = () => {
   };
 
   const handleChat = (postId: string) => {
-    // Navigate to the comments section of the post
-    router.push(`/post/${postId}`);
+    router.push(`../pages/viewpost?postId=${postId}`);
   };
 
   const navigateToPost = (postId: string) => {
-    router.push(`/post/${postId}`);
+    router.push(`../pages/viewpost?postId=${postId}`);
   };
 
   const filteredPosts = searchQuery
