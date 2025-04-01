@@ -33,6 +33,8 @@ interface Post {
   tags?: string[]; // Added tags field
 }
 
+const MAX_TITLE_LENGTH = 250; // Define max title length
+
 export default function WritePost() {
   const theme: "light" | "dark" = useColorScheme() || "light";
   const navigation = useNavigation(); // Access navigation
@@ -205,8 +207,20 @@ export default function WritePost() {
           placeholder="Enter title..."
           placeholderTextColor={Colors[theme].icon}
           value={postTitle}
-          onChangeText={setPostTitle}
+          onChangeText={(text) => {
+            if (text.length <= MAX_TITLE_LENGTH) {
+              setPostTitle(text);
+            }
+          }}
         />
+        <Text style={[styles.characterCount, { color: Colors[theme].text }]}>
+          {postTitle.length}/{MAX_TITLE_LENGTH}
+        </Text>
+        {postTitle.length === MAX_TITLE_LENGTH && (
+          <Text style={{ color: "red", fontSize: 12 }}>
+            Maximum title length reached.
+          </Text>
+        )}
 
         {/* Add Tags Button */}
         <TouchableOpacity

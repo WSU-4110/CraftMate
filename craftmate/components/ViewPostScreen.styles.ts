@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   },
   imageSliderContainer: {
     marginVertical: 4,
-    height: 200, // Adjust height as needed
+    height: 350, // Adjust height as needed
   },
   sliderImage: {
     width: Dimensions.get("window").width - 40, // Full width for single image
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     borderRadius: 10, // Rounded corners for the active image
   },
   sliderImageInactive: {
-    borderRadius: 0, // Straight edges for adjacent images
+    borderRadius: 10, // Straight edges for adjacent images
   },
   tagsContainer: {
     flexDirection: "row",

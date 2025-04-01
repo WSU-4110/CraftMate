@@ -10,7 +10,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
     fontSize: 16,
-    marginBottom: 20,
+    marginBottom: 5,
     borderColor: "#ddd",
   },
   mediaPreviewContainer: {
@@ -135,6 +135,10 @@ const styles = StyleSheet.create({
   radioText: {
     fontSize: 16,
     fontWeight: "bold",
+  },
+  characterCount: {
+    fontSize: 12,
+    textAlign: "right",
   },
 });
 
