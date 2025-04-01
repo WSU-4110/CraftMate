@@ -1,13 +1,5 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Image,
-  ScrollView,
-  Alert,
-} from "react-native";
+import React, { useState, useEffect } from "react"; // Removed useRef as it's not needed now
+import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, Alert } from "react-native";
 import { signInWithEmailAndPassword, signOut, User } from "firebase/auth";
 import { auth, db } from "../constants/firebaseConfig";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
@@ -17,8 +9,6 @@ import { useColorScheme } from "react-native";
 import { Colors } from "../constants/Colors";
 import { Link } from "expo-router";
 import styles from "./LoginScreen.styles";
-import * as ImageManipulator from "expo-image-manipulator";
-import * as FileSystem from 'expo-file-system';
 
 const PRESET_TAGS = [
   "Cars",
@@ -37,10 +27,11 @@ export default function LoginScreen() {
     name: "",
     bio: "",
     profileImage: "",
-    tags: [] as string[],
+    tags: [] as string[], // Default to an empty array
   });
   const [editingBio, setEditingBio] = useState(false);
   const [bioText, setBioText] = useState("");
+
   const theme = useColorScheme() || "light";
 
   useEffect(() => {
@@ -90,8 +81,6 @@ export default function LoginScreen() {
         password
       );
       const user = userCredential.user;
-      const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, { isActive: true });
       Toast.show({
         type: "success",
         text1: "Welcome",
@@ -105,63 +94,21 @@ export default function LoginScreen() {
   };
 
   const handleSignOut = async () => {
-    if (!user) return;
-    const userRef = doc(db, "users", user.uid);
-    await updateDoc(userRef, { isActive: false });
     await signOut(auth);
     setUser(null);
     setProfile({ name: "", bio: "", profileImage: "", tags: [] });
     Toast.show({ type: "success", text1: "Signed Out" });
   };
 
-  const uriToBase64 = async (uri: string): Promise<string> => {
-    try {
-      const base64 = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-      const fileExtension = uri.split('.').pop()?.toLowerCase() || 'jpg';
-      const mimeType = fileExtension === 'png' ? 'image/png' : 'image/jpeg';
-      return `data:${mimeType};base64,${base64}`;
-    } catch (error) {
-      console.error('Error converting image to base64:', error);
-      return '';
-    }
-  };
-
   const handlePickImage = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 1,
-      });
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        // Resize and compress the image
-        const resizedImage = await ImageManipulator.manipulateAsync(
-          result.assets[0].uri,
-          [{ resize: { width: 500 } }], // Resize to a width of 500px
-          { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG } // Compress and save as JPEG
-        );
-
-        // Convert the resized image to base64
-        const base64Image = await uriToBase64(resizedImage.uri);
-
-        // Update the profile with the resized base64 image
-        await updateProfile({ profileImage: base64Image });
-
-        Toast.show({ type: "success", text1: "Profile image updated!" });
-      } else {
-        Toast.show({ type: "info", text1: "No image selected" });
-      }
-    } catch (error: any) {
-      console.error("Error picking image:", error);
-      Toast.show({
-        type: "error",
-        text1: "Upload Failed",
-        text2: error.message || "Unknown error occurred",
-      });
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+    if (!result.canceled) {
+      await updateProfile({ profileImage: result.assets[0].uri });
     }
   };
 
@@ -172,9 +119,9 @@ export default function LoginScreen() {
 
   const toggleTag = async (tag: string) => {
     if (!user) return;
-    const tags = (profile.tags || []).includes(tag)
-      ? (profile.tags || []).filter((t) => t !== tag)
-      : [...(profile.tags || []), tag];
+    const tags = profile.tags.includes(tag)
+      ? profile.tags.filter((t) => t !== tag)
+      : [...profile.tags, tag];
     await updateProfile({ tags });
   };
 
@@ -182,36 +129,30 @@ export default function LoginScreen() {
     Alert.prompt("New Tag", "Enter custom tag", async (tag) => {
       if (!tag) return;
       const trimmed = tag.trim();
-      if (!trimmed || (profile.tags || []).includes(trimmed)) return;
-      await updateProfile({ tags: [...(profile.tags || []), trimmed] });
+      if (!trimmed || profile.tags.includes(trimmed)) return;
+      await updateProfile({ tags: [...profile.tags, trimmed] });
     });
   };
 
   const textColor = theme === "dark" ? "#fff" : "#000";
 
+  // Render UI when user is logged in
   if (user) {
     return (
       <ScrollView
-        contentContainerStyle={[
-          styles.container,
-          { backgroundColor: Colors[theme].background },
-        ]}
+        contentContainerStyle={[styles.container, { backgroundColor: Colors[theme].background }]}
       >
-        <Text style={[styles.title, { color: Colors[theme].text }]}>
-          Profile
-        </Text>
+        <Text style={[styles.title, { color: Colors[theme].text }]}>Profile</Text>
 
         <TouchableOpacity onPress={handlePickImage}>
           <Image
             source={{
-              uri: profile.profileImage.startsWith('data:image/')
-                ? profile.profileImage // Base64 string
-                : profile.profileImage || "https://via.placeholder.com/150", // URI or placeholder
+              uri: profile.profileImage || "https://via.placeholder.com/150",
             }}
             style={{
-              width: 120, // Adjusted size
-              height: 120, // Adjusted size
-              borderRadius: 60, // Circular shape
+              width: 120,
+              height: 120,
+              borderRadius: 60,
               alignSelf: "center",
               marginBottom: 15,
               borderWidth: 2,
@@ -220,121 +161,72 @@ export default function LoginScreen() {
           />
         </TouchableOpacity>
 
-        <Text style={[styles.text, { color: Colors[theme].text }]}>
-          Name: {profile.name}
-        </Text>
-        <Text style={[styles.text, { color: Colors[theme].text }]}>
-          Email: {user.email}
-        </Text>
+        <Text style={[styles.text, { color: Colors[theme].text }]}>Name: {profile.name}</Text>
+        <Text style={[styles.text, { color: Colors[theme].text }]}>Email: {user.email}</Text>
 
-        <View style={{ marginVertical: 10 }}>
+        {/* Bio Editing */}
+        <View style={styles.bioContainer}>
           {editingBio ? (
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: Colors[theme].inputBackground,
-                  color: Colors[theme].text,
-                },
-              ]}
-              value={bioText}
-              onChangeText={setBioText}
-              onSubmitEditing={handleBioSubmit}
-              onBlur={handleBioSubmit}
-              autoFocus
-            />
+            <>
+              <TextInput
+                style={[styles.input, { color: Colors[theme].text }]}
+                value={bioText}
+                onChangeText={setBioText}
+                multiline
+                placeholder="Edit your bio"
+                placeholderTextColor={Colors[theme].icon}
+              />
+              <TouchableOpacity style={styles.button} onPress={handleBioSubmit}>
+                <Text style={styles.buttonText}>Save Bio</Text>
+              </TouchableOpacity>
+            </>
           ) : (
-            <TouchableOpacity onPress={() => setEditingBio(true)}>
-              <Text
-                style={[
-                  styles.text,
-                  {
-                    paddingVertical: 10,
-                    paddingHorizontal: 15,
-                    borderRadius: 6,
-                    borderColor: Colors[theme].icon,
-                    borderWidth: 1,
-                    color: Colors[theme].text,
-                  },
-                ]}
-              >
-                {profile.bio || "Tap to add a bio"}
+            <>
+              <Text style={[styles.text, { color: Colors[theme].text }]}>
+                Bio: {profile.bio || "No bio available."}
               </Text>
-            </TouchableOpacity>
+              <TouchableOpacity style={styles.button} onPress={() => setEditingBio(true)}>
+                <Text style={styles.buttonText}>Edit Bio</Text>
+              </TouchableOpacity>
+            </>
           )}
         </View>
 
-        <Text style={[styles.radioText, { marginTop: 20, color: Colors[theme].text }]}>
-  Tags:
-</Text>
-<View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-  {[
-    ...new Set([
-      ...PRESET_TAGS,
-      ...(profile.tags || []).filter((t) => !PRESET_TAGS.includes(t)),
-    ]),
-    "+",
-  ].map((tag) => (
-    <TouchableOpacity
-      key={tag}
-      onPress={() => (tag === "+" ? addCustomTag() : toggleTag(tag))}
-      style={{
-        backgroundColor:
-          tag === "+"
-            ? Colors[theme].inputBackground
-            : (profile.tags || []).includes(tag)
-            ? "#E89600"
-            : Colors[theme].inputBackground,
-        paddingVertical: 8,
-        paddingHorizontal: tag === "+" ? 12 : 14,
-        borderRadius: 20,
-        marginVertical: 4,
-        borderWidth: 1,
-        borderColor: tag === "+" ? "#aaa" : "transparent",
-      }}
-    >
-      <Text
-        style={{
-          color:
-            tag === "+"
-              ? "#aaa"
-              : (profile.tags || []).includes(tag)
-              ? "#fff"
-              : textColor,
-        }}
-      >
-        {tag}
-      </Text>
-    </TouchableOpacity>
-  ))}
-</View>
-
-
-        <Text style={[styles.radioText, { marginTop: 20, color: Colors[theme].text }]}>Selected Tags:</Text>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-          {profile.tags.map((tag, i) => (
-            <View
-              key={i}
+        {/* Tags UI */}
+        <Text style={[styles.radioText, { marginTop: 20, color: Colors[theme].text }]}>Tags:</Text>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+          {[...new Set([...PRESET_TAGS, ...profile.tags.filter(t => !PRESET_TAGS.includes(t))]), "+"].map((tag) => (
+            <TouchableOpacity
+              key={tag}
+              onPress={() => (tag === "+" ? addCustomTag() : toggleTag(tag))}
               style={{
-                backgroundColor: "#E89600",
-                paddingHorizontal: 10,
-                paddingVertical: 6,
-                borderRadius: 15,
-                marginTop: 4,
+                backgroundColor: tag === "+" ? Colors[theme].inputBackground : profile.tags.includes(tag) ? "#E89600" : Colors[theme].inputBackground,
+                paddingVertical: 8,
+                paddingHorizontal: tag === "+" ? 12 : 14,
+                borderRadius: 20,
+                marginVertical: 4,
+                borderWidth: 1,
+                borderColor: tag === "+" ? "#aaa" : "transparent",
               }}
             >
-              <Text style={{ color: "#fff" }}>{tag}</Text>
-            </View>
+              <Text style={{
+                color: tag === "+" ? "#aaa" : profile.tags.includes(tag) ? "#fff" : textColor,
+              }}>
+                {tag}
+              </Text>
+            </TouchableOpacity>
           ))}
         </View>
 
-        <TouchableOpacity style={styles.button} onPress={handleSignOut}>
-          <Text style={styles.buttonText }>Sign Out</Text>
+        {/* Sign Out Button */}
+        <TouchableOpacity style={[styles.button, { position: "absolute", bottom: 20, left: 20, right: 20 }]} onPress={handleSignOut}>
+          <Text style={styles.buttonText}>Sign Out</Text>
         </TouchableOpacity>
       </ScrollView>
     );
   }
 
+  // Render UI when the user is not logged in
   return (
     <View
       style={[styles.container, { backgroundColor: Colors[theme].background }]}
@@ -359,7 +251,7 @@ export default function LoginScreen() {
         <Text style={styles.buttonText}>Log In</Text>
       </TouchableOpacity>
       <View style={styles.footer}>
-        <Text style={[styles.footerText, { color: Colors[theme].text }]}>
+        <Text style={[styles.footerText, { color: Colors[theme].text }]} >
           Don't have an account?
           <Link href="../pages/signup" style={styles.footerLink}>
             {" "}
