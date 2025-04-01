@@ -17,6 +17,8 @@ import { useColorScheme } from "react-native";
 import { Colors } from "../constants/Colors";
 import { Link } from "expo-router";
 import styles from "./LoginScreen.styles";
+import * as ImageManipulator from "expo-image-manipulator";
+import * as FileSystem from 'expo-file-system';
 
 const PRESET_TAGS = [
   "Cars",
@@ -112,6 +114,20 @@ export default function LoginScreen() {
     Toast.show({ type: "success", text1: "Signed Out" });
   };
 
+  const uriToBase64 = async (uri: string): Promise<string> => {
+    try {
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      const fileExtension = uri.split('.').pop()?.toLowerCase() || 'jpg';
+      const mimeType = fileExtension === 'png' ? 'image/png' : 'image/jpeg';
+      return `data:${mimeType};base64,${base64}`;
+    } catch (error) {
+      console.error('Error converting image to base64:', error);
+      return '';
+    }
+  };
+
   const handlePickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -119,25 +135,28 @@ export default function LoginScreen() {
         allowsEditing: true,
         aspect: [1, 1],
         quality: 1,
-        base64: true, // ✅ Required to get base64 string
       });
-  
-      if (result.canceled || !result.assets || result.assets.length === 0) {
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        // Resize and compress the image
+        const resizedImage = await ImageManipulator.manipulateAsync(
+          result.assets[0].uri,
+          [{ resize: { width: 500 } }], // Resize to a width of 500px
+          { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG } // Compress and save as JPEG
+        );
+
+        // Convert the resized image to base64
+        const base64Image = await uriToBase64(resizedImage.uri);
+
+        // Update the profile with the resized base64 image
+        await updateProfile({ profileImage: base64Image });
+
+        Toast.show({ type: "success", text1: "Profile image updated!" });
+      } else {
         Toast.show({ type: "info", text1: "No image selected" });
-        return;
       }
-  
-      const base64String = result.assets[0].base64;
-      if (!base64String) {
-        throw new Error("Failed to get base64 from selected image.");
-      }
-  
-      const base64ImageUri = `data:image/jpeg;base64,${base64String}`;
-      await updateProfile({ profileImage: base64ImageUri });
-  
-      Toast.show({ type: "success", text1: "Profile image updated!" });
     } catch (error: any) {
-      console.error("Image update failed:", error);
+      console.error("Error picking image:", error);
       Toast.show({
         type: "error",
         text1: "Upload Failed",
@@ -185,12 +204,14 @@ export default function LoginScreen() {
         <TouchableOpacity onPress={handlePickImage}>
           <Image
             source={{
-              uri: profile.profileImage || "https://via.placeholder.com/150",
+              uri: profile.profileImage.startsWith('data:image/')
+                ? profile.profileImage // Base64 string
+                : profile.profileImage || "https://via.placeholder.com/150", // URI or placeholder
             }}
             style={{
-              width: 120,
-              height: 120,
-              borderRadius: 60,
+              width: 120, // Adjusted size
+              height: 120, // Adjusted size
+              borderRadius: 60, // Circular shape
               alignSelf: "center",
               marginBottom: 15,
               borderWidth: 2,
@@ -308,7 +329,7 @@ export default function LoginScreen() {
         </View>
 
         <TouchableOpacity style={styles.button} onPress={handleSignOut}>
-          <Text style={styles.buttonText}>Sign Out</Text>
+          <Text style={styles.buttonText }>Sign Out</Text>
         </TouchableOpacity>
       </ScrollView>
     );
@@ -340,7 +361,7 @@ export default function LoginScreen() {
       <View style={styles.footer}>
         <Text style={[styles.footerText, { color: Colors[theme].text }]}>
           Don't have an account?
-          <Link href="../auth/signup" style={styles.footerLink}>
+          <Link href="../pages/signup" style={styles.footerLink}>
             {" "}
             Sign Up
           </Link>
