@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react"; // Removed useRef as it's not needed now
+import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, Alert } from "react-native";
 import { signInWithEmailAndPassword, signOut, User } from "firebase/auth";
 import { auth, db } from "../constants/firebaseConfig";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
 import * as ImagePicker from "expo-image-picker";
 import Toast from "react-native-toast-message";
 import { useColorScheme } from "react-native";
@@ -43,7 +43,8 @@ export default function LoginScreen() {
     name: "",
     bio: "",
     profileImage: "",
-    tags: [] as string[], // Default to an empty array
+    tags: [] as string[],
+    isActive: false, // Add isActive to the local state
   });
   const [editingBio, setEditingBio] = useState(false);
   const [bioText, setBioText] = useState("");
@@ -55,6 +56,8 @@ export default function LoginScreen() {
       if (user) {
         setUser(user);
         await fetchUserProfile(user.uid);
+        // Update isActive status when user logs in
+        await updateIsActiveStatus(user.uid, true);
       } else {
         setUser(null);
       }
@@ -63,15 +66,25 @@ export default function LoginScreen() {
   }, []);
 
   const fetchUserProfile = async (uid: string) => {
-    const userRef = doc(db, "users", uid);
-    const userSnap = await getDoc(userRef);
-    if (userSnap.exists()) {
-      const data = userSnap.data() as any;
-      setProfile({
-        ...data,
-        tags: data.tags || [], // Ensure tags is always an array
-      });
-      setBioText(data.bio || "");
+    try {
+      const userRef = doc(db, "users", uid);
+      const userSnap = await getDoc(userRef);
+      
+      if (userSnap.exists()) {
+        const data = userSnap.data() as any;
+        setProfile({
+          ...data,
+          tags: data.tags || [],
+          isActive: data.isActive || false, // Ensure isActive is included in profile state
+        });
+        setBioText(data.bio || "");
+      } else {
+        // Handle case where user doc doesn't exist yet
+        console.log("No user profile document exists yet");
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      Toast.show({ type: "error", text1: "Failed to load profile" });
     }
   };
 
@@ -80,13 +93,39 @@ export default function LoginScreen() {
       profileImage: string;
       bio: string;
       tags: string[];
+      isActive: boolean;
     }>
   ) => {
     if (!user) return;
-    const userRef = doc(db, "users", user.uid);
-    await updateDoc(userRef, updates);
-    setProfile((prev) => ({ ...prev, ...updates }));
-    Toast.show({ type: "success", text1: "Profile Updated" });
+    try {
+      const userRef = doc(db, "users", user.uid);
+      await updateDoc(userRef, updates);
+      setProfile((prev) => ({ ...prev, ...updates }));
+      Toast.show({ type: "success", text1: "Profile Updated" });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      Toast.show({ type: "error", text1: "Failed to update profile" });
+    }
+  };
+
+  const updateIsActiveStatus = async (uid: string, status: boolean) => {
+    try {
+      const userRef = doc(db, "users", uid);
+      const userSnap = await getDoc(userRef);
+      
+      if (userSnap.exists()) {
+        // Document exists, update it
+        await updateDoc(userRef, { isActive: status });
+      } else {
+        // Document doesn't exist, create it with isActive field
+        await setDoc(userRef, { isActive: status });
+      }
+      
+      // Update local state
+      setProfile(prev => ({ ...prev, isActive: status }));
+    } catch (error) {
+      console.error("Error updating active status:", error);
+    }
   };
 
   const handleLogin = async () => {
@@ -104,16 +143,21 @@ export default function LoginScreen() {
       });
       setUser(user);
       await fetchUserProfile(user.uid);
+      // Updated: now handled in onAuthStateChanged
     } catch (error: any) {
       Toast.show({ type: "error", text1: "Login Failed", text2: error.message });
     }
   };
 
   const handleSignOut = async () => {
-    await signOut(auth);
-    setUser(null);
-    setProfile({ name: "", bio: "", profileImage: "", tags: [] });
-    Toast.show({ type: "success", text1: "Signed Out" });
+    if (user) {
+      // Set isActive to false before signing out
+      await updateIsActiveStatus(user.uid, false);
+      await signOut(auth);
+      setUser(null);
+      setProfile({ name: "", bio: "", profileImage: "", tags: [], isActive: false });
+      Toast.show({ type: "success", text1: "Signed Out" });
+    }
   };
 
   const handlePickImage = async () => {
@@ -206,6 +250,7 @@ export default function LoginScreen() {
 
         <Text style={[styles.text, { color: Colors[theme].text }]}>Name: {profile.name}</Text>
         <Text style={[styles.text, { color: Colors[theme].text }]}>Email: {user.email}</Text>
+        <Text style={[styles.text, { color: Colors[theme].text }]}>Status: {profile.isActive ? 'Active' : 'Inactive'}</Text>
 
         {/* Bio Editing */}
         <View style={styles.bioContainer}>
