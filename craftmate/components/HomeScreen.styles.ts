@@ -8,10 +8,10 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'center', // Changed from 'flex-start' to 'center' to vertically center the logo
     justifyContent: 'space-between',
     width: '100%',
-    paddingTop: 30, // Reduced from 40 to 20 to move the header higher
+    paddingTop: 20, // Reduced from 40 to 20 to move the header higher
     paddingBottom: -10,
   },
   leftPlaceholder: {
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden', // Ensure content doesn't overflow the dropdown
     width: '100%',
     position: 'absolute',
-    top: 72, // Adjust based on your header height
+    top: 55, // Reduced from 72 to 60 to move the search input and "x" up
     borderBottomLeftRadius: 10,
     borderBottomRightRadius: 10,
     elevation: 5,

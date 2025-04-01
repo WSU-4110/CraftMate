@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   topPadding: {
-    paddingTop: 25,
+    paddingTop: 8,
   },
   addTagsButton: {
     flexDirection: "row",
