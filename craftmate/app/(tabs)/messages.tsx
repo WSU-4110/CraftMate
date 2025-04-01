@@ -6,6 +6,7 @@ import { useLocalSearchParams } from "expo-router";
 import { useColorScheme } from "react-native";
 import { Colors } from "../../constants/Colors";
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation
+import { Ionicons } from "@expo/vector-icons"; // Import Ionicons
 
 interface Message {
     id: string;
@@ -71,8 +72,11 @@ export default function MessagesScreen() {
             <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
                 {/* **Receiver's Username Header** */}
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Text style={[styles.backButtonText, { color: Colors[theme].text }]}>←</Text>
+                    <TouchableOpacity
+                        style={styles.backButton}
+                        onPress={() => navigation.goBack()} // Navigate back to the previous screen
+                    >
+                        <Ionicons name="arrow-back" size={24} color={Colors[theme].text} />
                     </TouchableOpacity>
                     <Text style={[styles.headerText, { color: Colors[theme].text }]}>
                         {receiverUsername}
@@ -129,30 +133,26 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 20,
+        paddingTop: 30, // Add padding to shift everything down
     },
     header: {
+        fontSize: 24,
         flexDirection: 'row',
-        paddingVertical: 10, // Reduced padding for a thinner header
         alignItems: "center",
-        justifyContent: "space-between",
-        borderRadius: 8,
+        justifyContent: "center", // Center the username text
+        position: "relative", // Ensure proper positioning for the back button
         marginBottom: 10,
-        marginTop: 30
+        marginTop: 30,
     },
-    
     backButton: {
-        paddingHorizontal: 10, // Sufficient padding for touch area
-        paddingVertical: 10
-    },
-    backButtonText: {
-        fontSize: 25,
+        position: "absolute", // Position the back button absolutely
+        left: 0, // Align it as far left as possible
+        paddingVertical: 10, // Keep vertical padding for touch area
+        zIndex: 1, // Ensure it is above other elements
     },
     headerText: {
-        position: 'absolute', // Position text absolutely
-        width: '100%', // Ensure it spans the full width
-        textAlign: 'center', // Center text horizontally
         fontSize: 20,
-        fontWeight: "bold"
+        fontWeight: "bold",
     },
     list: {
         flex: 1,
