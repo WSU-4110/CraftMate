@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
-  StyleSheet,
   ScrollView,
   Alert,
 } from "react-native";
@@ -17,6 +16,7 @@ import { db, auth } from "../constants/firebaseConfig";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import { ThemeContext, useNavigation } from "@react-navigation/native";
+import styles from "./WritePostScreen.styles"; // Import the styles
 
 // Define the Post interface
 interface Post {
@@ -127,19 +127,20 @@ export default function WritePost() {
       Alert.alert("Error", "Post title is required.");
       return;
     }
-
+  
     setIsSubmitting(true);
-
+  
     try {
       const user = auth.currentUser;
       if (!user || !userDetails) {
         Alert.alert("Error", "You must be logged in to submit a post.");
         return;
       }
-
+  
       // Create a new post object
       const postData: Omit<Post, "id"> = {
         username: userDetails.username || "Anonymous",
+        userId: user.uid, // Add the userId here
         postTitle: postTitle.trim(), // Save title
         postBody: postContent.trim(), // Optional body
         timestamp: serverTimestamp(),
@@ -150,16 +151,16 @@ export default function WritePost() {
         likedBy: [],
         tags: selectedTags, // Include selected tags
       };
-
+  
       // Add the post to Firestore
       await addDoc(collection(db, "posts"), postData);
-
+  
       Alert.alert("Success", "Your post has been submitted!");
       setPostTitle(""); // Clear title
       setPostContent(""); // Clear content
       setSelectedMedia([]); // Clear media
       setSelectedTags([]); // Clear tags
-
+  
       // Navigate back to the previous screen
       navigation.goBack();
     } catch (error) {
@@ -169,6 +170,7 @@ export default function WritePost() {
       setIsSubmitting(false);
     }
   };
+  
 
   return (
     <ScrollView
@@ -339,141 +341,3 @@ export default function WritePost() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    padding: 20,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 16,
-    marginBottom: 20,
-    borderColor: "#ddd",
-  },
-  mediaPreviewContainer: {
-    flexDirection: "row",
-    marginBottom: 20,
-  },
-  mediaPreviewWrapper: {
-    position: "relative",
-    marginRight: 10,
-  },
-  mediaPreview: {
-    width: 100,
-    height: 100,
-    borderRadius: 8,
-  },
-  removeMediaButton: {
-    position: "absolute",
-    top: -5,
-    right: -5,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    borderRadius: 12,
-    padding: 2,
-  },
-  imageButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 20,
-  },
-  imageButtonText: {
-    marginLeft: 10,
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  submitButton: {
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  submitButtonText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#fff",
-  },
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 20,
-    marginTop: 30,
-    position: "relative",
-  },
-  backButton: {
-    position: "absolute",
-    left: 0,
-    paddingVertical: 10,
-    zIndex: 1,
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  topPadding: {
-    paddingTop: 8,
-  },
-  addTagsButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20, // Makes the button oval-shaped
-    marginBottom: 20,
-    alignSelf: "flex-start", // Ensures the button doesn't stretch
-  },
-  addTagsButtonText: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#000", // Text color
-    marginRight: 8, // Space between text and icon
-  },
-  tagMenu: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginBottom: 20,
-    backgroundColor: "#f9f9f9",
-    padding: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#ddd",
-  },
-  tagButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 20, // Makes the button oval-shaped
-    marginRight: 8,
-    marginBottom: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  tagText: {
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  selectedTagButton: {
-    backgroundColor: "#E89600", // Highlight selected tags
-  },
-  customTagButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    marginTop: 10,
-    alignSelf: "flex-start",
-  },
-  customTagButtonText: {
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  radioText: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-});

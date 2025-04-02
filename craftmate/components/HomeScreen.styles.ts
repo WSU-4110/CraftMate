@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
-    marginRight: 10,
+    marginRight: 8,
   },
   postUsername: {
     fontSize: 14,
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    marginLeft: 10,
+    marginLeft: 0, // Changed from 10 to 0 to align the oval to the left
   },
   ovalText: {
     marginLeft: 5,
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 200,
     borderRadius: 10,
-    marginTop: 10,
+    marginBottom: 4,
   },
   inputRow: {
     flexDirection: 'row',

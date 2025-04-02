@@ -174,8 +174,8 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 20,
-    marginTop: 40, // Added top margin to prevent clipping
+    marginBottom: 16,
+    marginTop: 38, // Added top margin to prevent clipping
     textAlign: "center",
   },
   userItem: {
