@@ -22,21 +22,20 @@ import {
   doc,
   updateDoc,
   increment,
-  arrayUnion,
-  arrayRemove,
   getDoc,
-  addDoc,
-  serverTimestamp,
+  deleteDoc,  // Import deleteDoc from Firestore
 } from 'firebase/firestore';
 import { onAuthStateChanged, User, getAuth } from 'firebase/auth';
 import { db, auth } from '../constants/firebaseConfig';
 import { useRouter, Link } from 'expo-router';
 import styles from './HomeScreen.styles';
+
 interface Post {
   id: string;
   username: string;
+  userId: string; // Store userId to check ownership of the post
   postTitle: string;
-  postBody: string; // Added textbody field
+  postBody: string;
   timestamp: string;
   likes: number;
   profileImage: string;
@@ -98,7 +97,7 @@ const HomeScreen = () => {
       const user = auth.currentUser;
 
       if (!user) {
-        Alert.alert("Error", "You must be logged in to perform this action."); // Handle user not logged in
+        Alert.alert("Error", "You must be logged in to perform this action.");
         return;
       }
 
@@ -132,6 +131,55 @@ const HomeScreen = () => {
     }
   };
 
+  const handleDeletePost = async (postId: string) => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+  
+    if (!user) {
+      Alert.alert("Error", "You must be logged in to delete a post.");
+      return;
+    }
+  
+    const postRef = doc(db, "posts", postId);
+    const postDoc = await getDoc(postRef);
+  
+    if (!postDoc.exists()) {
+      console.error("Post does not exist.");
+      return;
+    }
+  
+    const postData = postDoc.data();
+  
+    // Check if the post belongs to the current user
+    if (postData?.userId === user.uid) {
+      // Confirm deletion
+      Alert.alert(
+        "Confirm Delete",
+        "Are you sure you want to delete this post?",
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+          {
+            text: "Delete",
+            onPress: async () => {
+              try {
+                await deleteDoc(postRef);  // Delete the post from Firestore
+                console.log("Post deleted successfully!");
+              } catch (error) {
+                console.error("Error deleting post:", error);
+              }
+            },
+          },
+        ]
+      );
+    } else {
+      Alert.alert("Error", "You can only delete your own posts.");
+    }
+  };
+  
+
   const handleChat = (postId: string) => {
     router.push(`../pages/viewpost?postId=${postId}`);
   };
@@ -142,9 +190,9 @@ const HomeScreen = () => {
 
   const filteredPosts = searchQuery
     ? posts.filter((post) =>
-        (post.postTitle?.toLowerCase().includes(searchQuery.toLowerCase()) || // Check postTitle
-        post.postBody?.toLowerCase().includes(searchQuery.toLowerCase()) || // Check postBody
-        post.username?.toLowerCase().includes(searchQuery.toLowerCase())) // Check username
+        (post.postTitle?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          post.postBody?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          post.username?.toLowerCase().includes(searchQuery.toLowerCase()))
       )
     : posts;
 
@@ -164,7 +212,34 @@ const HomeScreen = () => {
           },
         ]}
       >
-        <TouchableOpacity onPress={() => navigateToPost(item.id)}>
+        <TouchableOpacity
+          onPress={() => navigateToPost(item.id)}
+          onLongPress={() => {
+            // Show options when the post is long-pressed
+            Alert.alert(
+              "Post Options",
+              "Choose an action:",
+              [
+                {
+                  text: "Open Post",
+                  onPress: () => navigateToPost(item.id),
+                },
+                {
+                  text: "Delete Post",
+                  onPress: () => {
+                    if (user?.uid === item.userId) {
+                      handleDeletePost(item.id);
+                    } else {
+                      Alert.alert("Error", "You can only delete your own posts.");
+                    }
+                  },
+                },
+                { text: "Cancel", style: "cancel" },
+              ],
+              { cancelable: true }
+            );
+          }}
+        >
           <View style={styles.postHeader}>
             <View style={styles.postHeaderLeft}>
               <Image
@@ -175,24 +250,15 @@ const HomeScreen = () => {
                 }
                 style={styles.profileImage}
               />
-              <Text
-                style={[styles.postUsername, { color: Colors[theme].text }]}
-              >
+              <Text style={[styles.postUsername, { color: Colors[theme].text }]}>
                 {item.username}
               </Text>
             </View>
-            <Text
-              style={[styles.postTimestamp, { color: Colors[theme].text }]}
-            >
+            <Text style={[styles.postTimestamp, { color: Colors[theme].text }]}>
               {postDate.toLocaleDateString()}
             </Text>
           </View>
-          <Text
-            style={[
-              styles.postContent,
-              { color: Colors[theme].postText, fontWeight: 'bold' },
-            ]}
-          >
+          <Text style={[styles.postContent, { color: Colors[theme].postText, fontWeight: 'bold' }]}>
             {item.postTitle}
           </Text>
           {item.images && item.images.length > 0 && (
@@ -208,32 +274,24 @@ const HomeScreen = () => {
                 styles.ovalContainer,
                 {
                   backgroundColor: item.likedBy?.includes(user?.uid)
-                    ? "#E89600" // Highlighted color for liked state
+                    ? '#E89600' // Highlighted color for liked state
                     : Colors[theme].tint, // Default color
                 },
               ]}
               onPress={() => handleLikePost(item.id)}
             >
               <Ionicons
-                name={
-                  item.likedBy?.includes(user?.uid)
-                    ? "thumbs-up"
-                    : "thumbs-up-outline"
-                }
+                name={item.likedBy?.includes(user?.uid) ? 'thumbs-up' : 'thumbs-up-outline'}
                 size={16}
-                color={
-                  item.likedBy?.includes(user?.uid)
-                    ? Colors[theme].background // Icon color for liked state
-                    : Colors[theme].text // Default icon color
-                }
+                color={item.likedBy?.includes(user?.uid) ? Colors[theme].background : Colors[theme].text}
               />
               <Text
                 style={[
                   styles.ovalText,
                   {
                     color: item.likedBy?.includes(user?.uid)
-                      ? Colors[theme].background // Text color for liked state
-                      : Colors[theme].text, // Default text color
+                      ? Colors[theme].background
+                      : Colors[theme].text,
                   },
                 ]}
               >
@@ -243,24 +301,11 @@ const HomeScreen = () => {
 
             {/* Comment Button */}
             <TouchableOpacity
-              style={[
-                styles.actionButton,
-                styles.ovalContainer,
-                { 
-                  backgroundColor: Colors[theme].tint,
-                  marginLeft: 10, // Added marginLeft for comment oval
-                },
-              ]}
+              style={[styles.actionButton, styles.ovalContainer, { backgroundColor: Colors[theme].tint }]}
               onPress={() => handleChat(item.id)}
             >
-              <Ionicons
-                name="chatbubble-outline"
-                size={16}
-                color={Colors[theme].text}
-              />
-              <Text
-                style={[styles.ovalText, { color: Colors[theme].text }]}
-              >
+              <Ionicons name="chatbubble-outline" size={16} color={Colors[theme].text} />
+              <Text style={[styles.ovalText, { color: Colors[theme].text }]}>
                 {item.comments || 0}
               </Text>
             </TouchableOpacity>
@@ -271,11 +316,7 @@ const HomeScreen = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-    >
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
       <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
         <View style={styles.headerContainer}>
           {user ? (
@@ -288,33 +329,19 @@ const HomeScreen = () => {
             </Link>
           )}
           <View style={styles.logoContainer}>
-            <Image 
-              source={require('../assets/images/craftmate-logo.png')} 
-              style={styles.logo} 
-            />
+            <Image source={require('../assets/images/craftmate-logo.png')} style={styles.logo} />
           </View>
-          <TouchableOpacity 
-            style={styles.searchIconContainer}
-            onPress={handleSearchPress}
-          >
+          <TouchableOpacity style={styles.searchIconContainer} onPress={handleSearchPress}>
             <Ionicons name="search" size={26} color={Colors[theme].text} />
           </TouchableOpacity>
         </View>
         {isDropdownVisible && (
-          <Animated.View
-            style={[
-              styles.dropdownContainer,
-              { height: dropdownAnimation, backgroundColor: Colors[theme].background },
-            ]}
-          >
+          <Animated.View style={[styles.dropdownContainer, { height: dropdownAnimation, backgroundColor: Colors[theme].background }]}>
             <View style={styles.dropdownContent}>
               <TextInput
                 placeholder="Search posts..."
                 placeholderTextColor={Colors[theme].icon}
-                style={[
-                  styles.searchInput,
-                  { borderColor: Colors[theme].text, color: Colors[theme].text },
-                ]}
+                style={[styles.searchInput, { borderColor: Colors[theme].text, color: Colors[theme].text }]}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
                 autoFocus
