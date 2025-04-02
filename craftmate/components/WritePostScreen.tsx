@@ -127,19 +127,20 @@ export default function WritePost() {
       Alert.alert("Error", "Post title is required.");
       return;
     }
-
+  
     setIsSubmitting(true);
-
+  
     try {
       const user = auth.currentUser;
       if (!user || !userDetails) {
         Alert.alert("Error", "You must be logged in to submit a post.");
         return;
       }
-
+  
       // Create a new post object
       const postData: Omit<Post, "id"> = {
         username: userDetails.username || "Anonymous",
+        userId: user.uid, // Add the userId here
         postTitle: postTitle.trim(), // Save title
         postBody: postContent.trim(), // Optional body
         timestamp: serverTimestamp(),
@@ -150,16 +151,16 @@ export default function WritePost() {
         likedBy: [],
         tags: selectedTags, // Include selected tags
       };
-
+  
       // Add the post to Firestore
       await addDoc(collection(db, "posts"), postData);
-
+  
       Alert.alert("Success", "Your post has been submitted!");
       setPostTitle(""); // Clear title
       setPostContent(""); // Clear content
       setSelectedMedia([]); // Clear media
       setSelectedTags([]); // Clear tags
-
+  
       // Navigate back to the previous screen
       navigation.goBack();
     } catch (error) {
@@ -169,6 +170,7 @@ export default function WritePost() {
       setIsSubmitting(false);
     }
   };
+  
 
   return (
     <ScrollView
