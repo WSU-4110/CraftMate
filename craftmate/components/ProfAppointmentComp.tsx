@@ -1,5 +1,13 @@
-import React, { useState } from "react";
-import { View, Text, FlatList, StyleSheet, Image, Dimensions } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  Image,
+  Dimensions,
+  TouchableOpacity,
+} from "react-native";
 import {
   GestureHandlerRootView,
   PanGestureHandler,
@@ -77,19 +85,57 @@ const styles = StyleSheet.create({
 
 export default function ProfAppointmentComp() {
   const [appointments, setAppointments] = useState(dummyAppointments);
-  const [acceptedAppointments, setAcceptedAppointments] = useState<typeof dummyAppointments>([]);
+  const [acceptedAppointments, setAcceptedAppointments] = useState<
+    typeof dummyAppointments
+  >([]);
+  const [lastRemoved, setLastRemoved] = useState<{
+    item: typeof dummyAppointments[0];
+    type: "accept" | "reject";
+  } | null>(null);
+  const [showUndo, setShowUndo] = useState(false);
+
+  useEffect(() => {
+    if (lastRemoved) {
+      setShowUndo(true);
+      const timeout = setTimeout(() => {
+        setShowUndo(false);
+        setLastRemoved(null);
+      }, 5000); // 5 seconds to undo
+
+      return () => clearTimeout(timeout);
+    }
+  }, [lastRemoved]);
 
   const handleDecision = (id: string, type: "accept" | "reject") => {
     const target = appointments.find((appt) => appt.id === id);
-    if (type === "accept" && target) {
+    if (!target) return;
+
+    if (type === "accept") {
       setAcceptedAppointments((prev) => [...prev, target]);
     }
+
     setAppointments((prev) => prev.filter((appt) => appt.id !== id));
+    setLastRemoved({ item: target, type });
+  };
+
+  const handleUndo = () => {
+    if (!lastRemoved) return;
+
+    const { item, type } = lastRemoved;
+
+    if (type === "accept") {
+      setAcceptedAppointments((prev) =>
+        prev.filter((appt) => appt.id !== item.id)
+      );
+    }
+
+    setAppointments((prev) => [item, ...prev]);
+    setLastRemoved(null);
+    setShowUndo(false);
   };
 
   const SwipeableCard = ({ item }: { item: typeof dummyAppointments[0] }) => {
     const translateX = useSharedValue(0);
-    const cardHeight = useSharedValue(1);
 
     const gestureHandler = useAnimatedGestureHandler({
       onActive: (event) => {
@@ -97,12 +143,10 @@ export default function ProfAppointmentComp() {
       },
       onEnd: () => {
         if (translateX.value > SWIPE_THRESHOLD) {
-          // Accept
           translateX.value = withTiming(SCREEN_WIDTH, {}, () => {
             runOnJS(handleDecision)(item.id, "accept");
           });
         } else if (translateX.value < -SWIPE_THRESHOLD) {
-          // Reject
           translateX.value = withTiming(-SCREEN_WIDTH, {}, () => {
             runOnJS(handleDecision)(item.id, "reject");
           });
@@ -144,6 +188,7 @@ export default function ProfAppointmentComp() {
   return (
     <GestureHandlerRootView style={styles.container}>
       <Text style={styles.header}>Today's Appointments</Text>
+
       <FlatList
         data={appointments}
         keyExtractor={(item) => item.id}
@@ -151,6 +196,7 @@ export default function ProfAppointmentComp() {
         contentContainerStyle={styles.list}
         scrollEnabled={false}
       />
+
       {acceptedAppointments.length > 0 && (
         <>
           <Text style={styles.subHeader}>Accepted Appointments</Text>
@@ -162,6 +208,30 @@ export default function ProfAppointmentComp() {
             scrollEnabled={false}
           />
         </>
+      )}
+
+      {showUndo && lastRemoved && (
+        <View
+          style={{
+            position: "absolute",
+            bottom: 20,
+            left: 20,
+            right: 20,
+            backgroundColor: "#333",
+            padding: 16,
+            borderRadius: 12,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Text style={{ color: "#fff", flex: 1 }}>
+            Appointment {lastRemoved.type === "accept" ? "accepted" : "rejected"}.
+          </Text>
+          <TouchableOpacity onPress={handleUndo}>
+            <Text style={{ color: "#4FC3F7", fontWeight: "bold" }}>UNDO</Text>
+          </TouchableOpacity>
+        </View>
       )}
     </GestureHandlerRootView>
   );
