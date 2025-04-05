@@ -193,7 +193,7 @@ export default function WritePost() {
         { backgroundColor: Colors[theme].background },
       ]}
     >
-      <View style={styles.topPadding}>
+      <View>
         <View style={[styles.headerContainer]}>
           {/* Back Arrow */}
           <TouchableOpacity

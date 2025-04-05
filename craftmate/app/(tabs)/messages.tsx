@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center", // Center the username text
         position: "relative", // Ensure proper positioning for the back button
-        marginBottom: 10,
+        marginBottom: -15,
         marginTop: 30,
     },
     backButton: {

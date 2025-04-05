@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 20,
-    marginTop: 30,
+    marginTop: 36,
     position: "relative",
   },
   backButton: {
@@ -75,9 +75,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
-  },
-  topPadding: {
-    paddingTop: 8,
   },
   addTagsButton: {
     flexDirection: "row",
