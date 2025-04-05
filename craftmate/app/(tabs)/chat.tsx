@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image, TextInput, KeyboardAvoidingView, Platform } from "react-native";
-import { collection, query, onSnapshot, orderBy, limit, addDoc, serverTimestamp, getDoc, doc } from "firebase/firestore";
+import { collection, query, onSnapshot, orderBy, limit, addDoc, serverTimestamp, getDoc, doc, updateDoc, where, getDocs } from "firebase/firestore";
 import { db, auth } from "../../constants/firebaseConfig";
-import { onAuthStateChanged } from "firebase/auth"; // Import onAuthStateChanged
-import { useRouter, usePathname } from "expo-router"; // Import usePathname
+import { onAuthStateChanged } from "firebase/auth";
+import { useRouter, usePathname } from "expo-router";
 import { useColorScheme } from "react-native";
 import { Colors } from "../../constants/Colors";
-import { Ionicons } from "@expo/vector-icons"; // Import Ionicons
+import { Ionicons } from "@expo/vector-icons";
 
 interface User {
   uid: string;
@@ -22,24 +22,26 @@ interface Message {
   senderId: string;
   receiverId?: string;
   timestamp: any;
+  read: boolean; // Added read field
 }
 
 export default function ChatListScreen() {
   const [users, setUsers] = useState<User[]>([]);
-  const [recentMessages, setRecentMessages] = useState<{ [key: string]: string }>({});
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Track login state
-  const [showMessages, setShowMessages] = useState(false); // Toggle between chat list and messages
-  const [selectedUser, setSelectedUser] = useState<User | null>(null); // Selected user for chat
-  const [messages, setMessages] = useState<Message[]>([]); // Messages with selected user
-  const [newMessage, setNewMessage] = useState(""); // New message text
+  const [recentMessages, setRecentMessages] = useState<{ [key: string]: Message }>({});
+  const [unreadCounts, setUnreadCounts] = useState<{ [key: string]: number }>({});
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showMessages, setShowMessages] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState("");
   const router = useRouter();
-  const pathname = usePathname(); // Get current path
-  const theme = useColorScheme() || "light"; // Detect system theme
+  const pathname = usePathname();
+  const theme = useColorScheme() || "light";
 
   // Listen for authentication state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsLoggedIn(!!user); // Set login state based on user presence
+      setIsLoggedIn(!!user);
     });
 
     return () => unsubscribe();
@@ -47,7 +49,7 @@ export default function ChatListScreen() {
 
   // Load users when logged in
   useEffect(() => {
-    if (!auth.currentUser) return; // Exit if no user is logged in
+    if (!auth.currentUser) return;
 
     const q = query(collection(db, "users"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -62,42 +64,53 @@ export default function ChatListScreen() {
             profileImage: data.profileImage || "https://via.placeholder.com/150",
           };
         })
-        .filter((user) => user.uid !== auth.currentUser?.uid); // Exclude the current user
+        .filter((user) => user.uid !== auth.currentUser?.uid);
 
       setUsers(usersList);
     });
 
     return () => unsubscribe();
-  }, [isLoggedIn]); // Re-run when login state changes
+  }, [isLoggedIn]);
 
   // Track path changes to reset view when the tab is clicked again
   useEffect(() => {
-    // Reset to chat list when navigating back to the chat tab
     if (pathname === '/chat' && showMessages) {
       setShowMessages(false);
       setSelectedUser(null);
     }
   }, [pathname]);
 
-  // Subscribe to recent messages with each user
+  // Subscribe to recent messages and unread counts with each user
   useEffect(() => {
-    if (!auth.currentUser) return; // Exit if no user is logged in
+    if (!auth.currentUser) return;
 
     const unsubscribes: (() => void)[] = [];
 
     users.forEach((user) => {
       const chatId = [auth.currentUser?.uid, user.uid].sort().join("_");
       const messagesRef = collection(db, "chats", chatId, "messages");
-      const q = query(messagesRef, orderBy("timestamp", "desc"), limit(1));
-
-      const unsubscribe = onSnapshot(q, (snapshot) => {
+      
+      // Get most recent message
+      const recentQuery = query(messagesRef, orderBy("timestamp", "desc"), limit(1));
+      const recentUnsubscribe = onSnapshot(recentQuery, (snapshot) => {
         if (!snapshot.empty) {
           const message = snapshot.docs[0].data() as Message;
-          setRecentMessages((prev) => ({ ...prev, [user.uid]: message.text }));
+          setRecentMessages((prev) => ({ ...prev, [user.uid]: message }));
         }
       });
+      
+      // Get unread count
+      const unreadQuery = query(
+        messagesRef,
+        where("receiverId", "==", auth.currentUser?.uid),
+        where("read", "==", false)
+      );
+      
+      const unreadUnsubscribe = onSnapshot(unreadQuery, (snapshot) => {
+        setUnreadCounts((prev) => ({ ...prev, [user.uid]: snapshot.size }));
+      });
 
-      unsubscribes.push(unsubscribe);
+      unsubscribes.push(recentUnsubscribe, unreadUnsubscribe);
     });
 
     return () => {
@@ -120,6 +133,29 @@ export default function ChatListScreen() {
       } as Message)));
     });
 
+    // Mark all unread messages from this user as read
+    const markMessagesAsRead = async () => {
+      try {
+        const unreadQuery = query(
+          messagesRef,
+          where("receiverId", "==", auth.currentUser?.uid),
+          where("read", "==", false)
+        );
+        
+        const unreadDocs = await getDocs(unreadQuery);
+        
+        const batch = unreadDocs.docs.map(async (doc) => {
+          await updateDoc(doc.ref, { read: true });
+        });
+        
+        await Promise.all(batch);
+      } catch (error) {
+        console.error("Error marking messages as read:", error);
+      }
+    };
+
+    markMessagesAsRead();
+
     return () => unsubscribe();
   }, [selectedUser]);
 
@@ -139,6 +175,7 @@ export default function ChatListScreen() {
       senderId: auth.currentUser.uid,
       receiverId: selectedUser.uid,
       timestamp: serverTimestamp(),
+      read: false, // All new messages start as unread
     });
 
     setNewMessage("");
@@ -199,24 +236,36 @@ export default function ChatListScreen() {
             data={messages}
             keyExtractor={item => item.id || Math.random().toString()}
             renderItem={({ item }) => (
-              <Text 
-                style={[
-                  styles.message,
-                  item.senderId === auth.currentUser?.uid ? styles.myMessage : styles.otherMessage,
-                  { 
-                    backgroundColor: item.senderId === auth.currentUser?.uid 
-                      ? "#E89600" // Always Orange for Sent Messages
-                      : (theme === "light" ? "#eee" : "#333"), // Light Gray in Light Mode, Dark Gray in Dark Mode
-                    color: item.senderId === auth.currentUser?.uid 
-                      ? "#fff" // White Text for Sent Messages
-                      : Colors[theme].text,
-                  }
-                ]}
-              >
-                {item.text}
-              </Text>
+              <View style={[
+                styles.messageContainer,
+                item.senderId === auth.currentUser?.uid ? styles.myMessageContainer : styles.otherMessageContainer,
+              ]}>
+                <Text 
+                  style={[
+                    styles.message,
+                    item.senderId === auth.currentUser?.uid ? styles.myMessage : styles.otherMessage,
+                    { 
+                      backgroundColor: item.senderId === auth.currentUser?.uid 
+                        ? "#E89600" // Always Orange for Sent Messages
+                        : (theme === "light" ? "#eee" : "#333"), // Light Gray in Light Mode, Dark Gray in Dark Mode
+                      color: item.senderId === auth.currentUser?.uid 
+                        ? "#fff" // White Text for Sent Messages
+                        : Colors[theme].text,
+                    }
+                  ]}
+                >
+                  {item.text}
+                </Text>
+                
+                {/* Read indicator for sent messages */}
+                {item.senderId === auth.currentUser?.uid && (
+                  <Text style={styles.readIndicator}>
+                    {item.read ? "Read" : "Delivered"}
+                  </Text>
+                )}
+              </View>
             )}
-            style={[styles.list, { marginTop: 40 }]} // Increased top margin
+            style={[styles.list, { marginTop: 40 }]}
           />
 
           {/* Input & Send Button */}
@@ -258,16 +307,26 @@ export default function ChatListScreen() {
             onPress={() => openChat(item)}
           >
             <View style={styles.userInfo}>
+              {/* Notification dot for unread messages */}
+                {unreadCounts[item.uid] > 0 && (
+                <View
+                  style={[
+                  styles.notificationDot,
+                  { backgroundColor: Colors[theme].text },
+                  ]}
+                />
+                )}
+              
               <Image
                 source={{ uri: item.profileImage }}
                 style={styles.profileImage}
               />
-              <View>
+              <View style={{ flex: 1 }}>
                 <Text
                   style={[
                     styles.username,
                     { 
-                      color: theme === "light" ? "#fff" : "#000", // White text in light mode, black in dark mode
+                      color: theme === "light" ? "#fff" : "#000",
                       textAlign: "left",
                     }
                   ]}
@@ -278,12 +337,12 @@ export default function ChatListScreen() {
                   style={[
                     styles.recentMessage,
                     { 
-                      color: theme === "light" ? "#fff" : "#000", // White text in light mode, black in dark mode
+                      color: theme === "light" ? "#fff" : "#000",
                       textAlign: "left",
                     }
                   ]}
                 >
-                  {recentMessages[item.uid] || "No recent messages"}
+                  {recentMessages[item.uid]?.text || "No recent messages"}
                 </Text>
               </View>
             </View>
@@ -330,6 +389,8 @@ const styles = StyleSheet.create({
   userInfo: {
     flexDirection: "row", // Align profile image and text horizontally
     alignItems: "center",
+    flex: 1,
+    position: "relative", // Added for positioning the notification dot
   },
   profileImage: {
     width: 50, // Set the width of the profile image
@@ -351,18 +412,42 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginTop: 40, // Increased from 20 to 40
   },
+  messageContainer: {
+    marginVertical: 5,
+    maxWidth: "70%",
+  },
+  myMessageContainer: {
+    alignSelf: "flex-end",
+  },
+  otherMessageContainer: {
+    alignSelf: "flex-start",
+  },
   message: {
     fontSize: 18,
     padding: 10,
-    marginVertical: 5,
     borderRadius: 10,
-    maxWidth: "70%",
   },
   myMessage: {
     alignSelf: "flex-end",
   },
   otherMessage: {
     alignSelf: "flex-start",
+  },
+  readIndicator: {
+    fontSize: 12,
+    color: "#999",
+    alignSelf: "flex-end",
+    marginTop: 2,
+    marginRight: 5,
+  },
+  notificationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    position: "absolute",
+    left: -11, // Position to the left of the profile image
+    top: 20, // Center vertically with the profile image
+    zIndex: 1, // Ensure it's visible above other elements
   },
   inputContainer: {
     flexDirection: 'row',
