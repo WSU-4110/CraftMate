@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image, TextInput, KeyboardAvoidingView, Platform } from "react-native";
 import { collection, query, onSnapshot, orderBy, limit, addDoc, serverTimestamp, getDoc, doc, updateDoc, where, getDocs } from "firebase/firestore";
 import { db, auth } from "../../constants/firebaseConfig";
@@ -37,6 +37,7 @@ export default function ChatListScreen() {
   const router = useRouter();
   const pathname = usePathname();
   const theme = useColorScheme() || "light";
+  const messagesEndRef = useRef<FlatList>(null);
 
   // Listen for authentication state changes
   useEffect(() => {
@@ -159,6 +160,36 @@ export default function ChatListScreen() {
     return () => unsubscribe();
   }, [selectedUser]);
 
+  // Sort users by most recent message timestamp
+  const sortedUsers = useMemo(() => {
+    return [...users].sort((a, b) => {
+      const messageA = recentMessages[a.uid];
+      const messageB = recentMessages[b.uid];
+      
+      // If no messages, put at the end
+      if (!messageA && !messageB) return 0;
+      if (!messageA) return 1;
+      if (!messageB) return -1;
+      
+      // Get timestamps (or 0 if not available)
+      const timeA = messageA.timestamp?.toMillis ? messageA.timestamp.toMillis() : 0;
+      const timeB = messageB.timestamp?.toMillis ? messageB.timestamp.toMillis() : 0;
+      
+      // Sort in descending order (newest first)
+      return timeB - timeA;
+    });
+  }, [users, recentMessages]);
+
+  // Auto-scroll to the bottom when messages change or when a chat is opened
+  useEffect(() => {
+    if (messagesEndRef.current && messages.length > 0) {
+      // Delay to ensure rendering is complete before scrolling
+      setTimeout(() => {
+        messagesEndRef.current?.scrollToEnd({ animated: false });
+      }, 100);
+    }
+  }, [messages, showMessages, selectedUser]);
+
   const openChat = (user: User) => {
     setSelectedUser(user);
     setShowMessages(true);
@@ -233,6 +264,7 @@ export default function ChatListScreen() {
 
           {/* Messages List */}
           <FlatList
+            ref={messagesEndRef}
             data={messages}
             keyExtractor={item => item.id || Math.random().toString()}
             renderItem={({ item }) => (
@@ -266,6 +298,8 @@ export default function ChatListScreen() {
               </View>
             )}
             style={[styles.list, { marginTop: 40 }]}
+            onContentSizeChange={() => messagesEndRef.current?.scrollToEnd({ animated: false })}
+            onLayout={() => messagesEndRef.current?.scrollToEnd({ animated: false })}
           />
 
           {/* Input & Send Button */}
@@ -294,7 +328,7 @@ export default function ChatListScreen() {
     <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
       <Text style={[styles.header, { color: Colors[theme].text }]}>Messages</Text>
       <FlatList
-        data={users}
+        data={sortedUsers}
         keyExtractor={(item) => item.uid}
         renderItem={({ item }) => (
           <TouchableOpacity
