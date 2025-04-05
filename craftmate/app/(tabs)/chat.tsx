@@ -249,17 +249,27 @@ export default function ChatListScreen() {
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
-          {/* Header with user name and back button */}
-          <View style={[styles.header, { marginBottom: -20 }]}>
+          {/* Header with user name, profile image and back button */}
+          <View style={styles.headerContainer}>
             <TouchableOpacity
               style={styles.backButton}
               onPress={goBackToList}
             >
               <Ionicons name="arrow-back" size={24} color={Colors[theme].text} />
             </TouchableOpacity>
-            <Text style={[styles.headerText, { color: Colors[theme].text }]}>
-              {selectedUser.username}
-            </Text>
+
+            {/* Centered profile container */}
+            <View style={styles.headerContent}>
+              <View style={styles.profileContainer}>
+                <Image
+                  source={{ uri: selectedUser.profileImage }}
+                  style={styles.headerProfileImage}
+                />
+                <Text style={[styles.username, { color: Colors[theme].text }]}>
+                  {selectedUser.username}
+                </Text>
+              </View>
+            </View>
           </View>
 
           {/* Messages List */}
@@ -506,5 +516,31 @@ const styles = StyleSheet.create({
   },
   sendButtonText: {
     fontWeight: 'bold',
+  },
+  headerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center", // Changed to center the content
+    marginBottom: -28,
+    marginTop: 30,
+    position: "relative",
+    width: "100%",
+  },
+  headerContent: {
+    alignItems: "center", // Center the content
+    justifyContent: "center", // Center the content
+    flex: 1, // Take up available space
+  },
+  profileContainer: {
+    marginTop: 4,
+    flexDirection: "row", // Arrange items horizontally
+    alignItems: "center", // Align items vertically in the center
+    justifyContent: "center", // Center the container horizontally
+  },
+  headerProfileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
   },
 });
