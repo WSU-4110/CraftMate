@@ -3,7 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image, TextInput, K
 import { collection, query, onSnapshot, orderBy, limit, addDoc, serverTimestamp, getDoc, doc } from "firebase/firestore";
 import { db, auth } from "../../constants/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth"; // Import onAuthStateChanged
-import { useRouter } from "expo-router";
+import { useRouter, usePathname } from "expo-router"; // Import usePathname
 import { useColorScheme } from "react-native";
 import { Colors } from "../../constants/Colors";
 import { Ionicons } from "@expo/vector-icons"; // Import Ionicons
@@ -33,6 +33,7 @@ export default function ChatListScreen() {
   const [messages, setMessages] = useState<Message[]>([]); // Messages with selected user
   const [newMessage, setNewMessage] = useState(""); // New message text
   const router = useRouter();
+  const pathname = usePathname(); // Get current path
   const theme = useColorScheme() || "light"; // Detect system theme
 
   // Listen for authentication state changes
@@ -68,6 +69,15 @@ export default function ChatListScreen() {
 
     return () => unsubscribe();
   }, [isLoggedIn]); // Re-run when login state changes
+
+  // Track path changes to reset view when the tab is clicked again
+  useEffect(() => {
+    // Reset to chat list when navigating back to the chat tab
+    if (pathname === '/chat' && showMessages) {
+      setShowMessages(false);
+      setSelectedUser(null);
+    }
+  }, [pathname]);
 
   // Subscribe to recent messages with each user
   useEffect(() => {
