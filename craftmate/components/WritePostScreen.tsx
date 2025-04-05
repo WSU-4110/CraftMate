@@ -33,8 +33,6 @@ interface Post {
   tags?: string[]; // Added tags field
 }
 
-const MAX_TITLE_LENGTH = 250; // Define max title length
-
 export default function WritePost() {
   const theme: "light" | "dark" = useColorScheme() || "light";
   const navigation = useNavigation(); // Access navigation
@@ -46,6 +44,9 @@ export default function WritePost() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]); // State for selected tags
   const [isTagMenuVisible, setIsTagMenuVisible] = useState(false); // State to toggle tag menu
   const TAG_OPTIONS = ["Cars", "Building", "Electricity", "Plumbing", "Painting", "Tools"]; // Predefined tags
+
+  const MAX_TITLE_LENGTH = 250; // Define max title length
+  const [isTitleMaxReached, setIsTitleMaxReached] = useState(false); // State to track if title length limit is reached
 
   useEffect(() => {
     const fetchUserDetails = async () => {
@@ -124,24 +125,36 @@ export default function WritePost() {
     });
   };
 
+  // Title character limit handler
+  const handleTitleChange = (text: string) => {
+    if (text.length <= MAX_TITLE_LENGTH) {
+      setPostTitle(text);
+      setIsTitleMaxReached(text.length === MAX_TITLE_LENGTH);
+    } else {
+      // Title exceeded max length, don't update state but update warning
+      setIsTitleMaxReached(true);
+    }
+  };
+
   const handleSubmitPost = async () => {
     if (!postTitle.trim()) {
       Alert.alert("Error", "Post title is required.");
       return;
     }
-
+  
     setIsSubmitting(true);
-
+  
     try {
       const user = auth.currentUser;
       if (!user || !userDetails) {
         Alert.alert("Error", "You must be logged in to submit a post.");
         return;
       }
-
+  
       // Create a new post object
       const postData: Omit<Post, "id"> = {
         username: userDetails.username || "Anonymous",
+        userId: user.uid, // Add the userId here
         postTitle: postTitle.trim(), // Save title
         postBody: postContent.trim(), // Optional body
         timestamp: serverTimestamp(),
@@ -152,16 +165,16 @@ export default function WritePost() {
         likedBy: [],
         tags: selectedTags, // Include selected tags
       };
-
+  
       // Add the post to Firestore
       await addDoc(collection(db, "posts"), postData);
-
+  
       Alert.alert("Success", "Your post has been submitted!");
       setPostTitle(""); // Clear title
       setPostContent(""); // Clear content
       setSelectedMedia([]); // Clear media
       setSelectedTags([]); // Clear tags
-
+  
       // Navigate back to the previous screen
       navigation.goBack();
     } catch (error) {
@@ -171,6 +184,7 @@ export default function WritePost() {
       setIsSubmitting(false);
     }
   };
+  
 
   return (
     <ScrollView
@@ -207,20 +221,21 @@ export default function WritePost() {
           placeholder="Enter title..."
           placeholderTextColor={Colors[theme].icon}
           value={postTitle}
-          onChangeText={(text) => {
-            if (text.length <= MAX_TITLE_LENGTH) {
-              setPostTitle(text);
-            }
-          }}
+          onChangeText={handleTitleChange}
+          maxLength={MAX_TITLE_LENGTH} // Add maxLength prop
         />
-        <Text style={[styles.characterCount, { color: Colors[theme].text }]}>
-          {postTitle.length}/{MAX_TITLE_LENGTH}
-        </Text>
-        {postTitle.length === MAX_TITLE_LENGTH && (
-          <Text style={{ color: "red", fontSize: 12 }}>
-            Maximum title length reached.
+        
+        {/* Character count and warning */}
+        <View style={styles.characterCountContainer}>
+          <Text style={[styles.characterCount, { color: isTitleMaxReached ? 'red' : Colors[theme].text }]}>
+            {postTitle.length}/{MAX_TITLE_LENGTH}
           </Text>
-        )}
+          {isTitleMaxReached && (
+            <Text style={styles.characterWarning}>
+              Maximum title length reached
+            </Text>
+          )}
+        </View>
 
         {/* Add Tags Button */}
         <TouchableOpacity
@@ -288,7 +303,6 @@ export default function WritePost() {
           style={[
             styles.input,
             {
-              marginBottom: 20,
               backgroundColor: Colors[theme].inputBackground,
               color: Colors[theme].text,
               height: 100, // Adjust height for multiline input

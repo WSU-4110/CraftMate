@@ -10,7 +10,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
     fontSize: 16,
-    marginBottom: 5,
+    marginBottom: 20,
     borderColor: "#ddd",
   },
   mediaPreviewContainer: {
@@ -136,9 +136,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
+  characterCountContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginTop: -15,
+  },
   characterCount: {
     fontSize: 12,
-    textAlign: "right",
+    textAlign: 'right',
+  },
+  characterWarning: {
+    fontSize: 12,
+    color: 'red',
+    marginLeft: 8,
   },
 });
 
