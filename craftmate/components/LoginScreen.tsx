@@ -317,25 +317,33 @@ export default function LoginScreen() {
   // Render UI when the user is not logged in
   return (
     <View
-      style={[styles.container, { backgroundColor: Colors[theme].background }]}
+      style={[
+        styles.container, 
+        { 
+          backgroundColor: Colors[theme].background,
+          justifyContent: "center",
+          alignItems: "center",
+          flex: 1
+        }
+      ]}
     >
       <Text style={styles.title}>Log In</Text>
       <TextInput
-        style={[styles.input, { color: Colors[theme].text }]}
+        style={[styles.input, { color: Colors[theme].text, width: "100%" }]}
         placeholder="Email"
         placeholderTextColor={Colors[theme].icon}
         value={email}
         onChangeText={setEmail}
       />
       <TextInput
-        style={[styles.input, { color: Colors[theme].text }]}
+        style={[styles.input, { color: Colors[theme].text, width: "100%" }]}
         placeholder="Password"
         placeholderTextColor={Colors[theme].icon}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
+      <TouchableOpacity style={[styles.button, { width: "100%" }]} onPress={handleLogin}>
         <Text style={styles.buttonText}>Log In</Text>
       </TouchableOpacity>
       <View style={styles.footer}>

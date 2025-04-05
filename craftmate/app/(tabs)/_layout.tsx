@@ -116,10 +116,8 @@ export default function TabLayout() {
           name="video"
           options={{
           tabBarIcon: ({ color }) => <IconSymbol size={32} name="video.fill" color={color} />,
-  }}
-/>
-
-
+        }}
+        />
         {/* Stack Navigation for Private Messages */}
         <Tabs.Screen
           name="messages"
