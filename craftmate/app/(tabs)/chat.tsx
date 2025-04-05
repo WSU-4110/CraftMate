@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
+    padding: 2,
     borderRadius: 10,
     borderWidth: 1,
     width: '100%', // Ensure the container takes the full width

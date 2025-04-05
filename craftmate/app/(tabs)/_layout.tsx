@@ -118,16 +118,9 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={32} name="video.fill" color={color} />,
         }}
         />
-        {/* Stack Navigation for Private Messages */}
-        <Tabs.Screen
-          name="messages"
-          options={{
-            href: null, 
-          }}
-        />
       </Tabs>
 
-      {/* ✅ Add Toast globally */}
+      {/* Toast component */}
       <Toast />
     </>
   );
