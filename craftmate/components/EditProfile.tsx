@@ -108,8 +108,32 @@ export default function EditProfileScreen() {
   };
 
   const saveAndGoBack = async () => {
-    await handleBioSubmit();
-    router.back();
+    try {
+      // Ensure bio and other fields are updated
+      await updateProfile({ 
+        bio: bioText,
+        // Include all fields that might have changed
+        username: profile.username,
+        firstName: profile.firstName,
+        lastName: profile.lastName
+      });
+      
+      Toast.show({ 
+        type: "success", 
+        text1: "Profile Updated",
+        text2: "Your changes have been saved"
+      });
+      
+      // Navigate back after successful update
+      router.back();
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      Toast.show({ 
+        type: "error", 
+        text1: "Update Failed",
+        text2: "Please try again"
+      });
+    }
   };
 
   return (

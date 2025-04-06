@@ -27,7 +27,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 15,
     alignItems: "center",
-    marginTop: 10,
   },
   buttonText: {
     fontWeight: "bold",
@@ -180,7 +179,18 @@ const styles = StyleSheet.create({
   footerLink: {
     color: "#E89600", // Match CraftMate's orange
     fontWeight: "bold",
-  }
+  },
+  text: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  editButton: {
+    marginTop: 20,
+    padding: 6,
+    backgroundColor: "#E89600", // CraftMate's orange
+    borderRadius: 8,
+    alignItems: "center",
+  },
 });
 
 export default styles;

@@ -11,7 +11,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useColorScheme } from "react-native";
 import { Colors } from "../constants/Colors";
-import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc, increment, arrayUnion } from "firebase/firestore";
 import { db, auth } from "../constants/firebaseConfig";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
@@ -167,7 +167,14 @@ export default function WritePost() {
       };
   
       // Add the post to Firestore
-      await addDoc(collection(db, "posts"), postData);
+      const postRef = await addDoc(collection(db, "posts"), postData);
+      
+      // Update the user's post count in Firestore
+      const userRef = doc(db, "users", user.uid);
+      await updateDoc(userRef, {
+        postCount: increment(1),
+        posts: arrayUnion(postRef.id)
+      });
   
       Alert.alert("Success", "Your post has been submitted!");
       setPostTitle(""); // Clear title
@@ -184,7 +191,6 @@ export default function WritePost() {
       setIsSubmitting(false);
     }
   };
-  
 
   return (
     <ScrollView

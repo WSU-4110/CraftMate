@@ -60,6 +60,7 @@ export default function SignUpScreen() {
         createdAt: new Date().toISOString(),
         followers: [],
         following: [],
+        postCount: 0, // Initialize post count
         isProfessional,
         isActive,
       });
