@@ -14,6 +14,8 @@ interface User {
   firstName: string;
   lastName: string;
   profileImage: string;
+  followers?: string[]; // Add followers array
+  following?: string[]; // Add following array
 }
 
 interface Message {
@@ -27,6 +29,7 @@ interface Message {
 
 export default function ChatListScreen() {
   const [users, setUsers] = useState<User[]>([]);
+  const [mutualFollowers, setMutualFollowers] = useState<string[]>([]);
   const [recentMessages, setRecentMessages] = useState<{ [key: string]: Message }>({});
   const [unreadCounts, setUnreadCounts] = useState<{ [key: string]: number }>({});
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -48,10 +51,41 @@ export default function ChatListScreen() {
     return () => unsubscribe();
   }, []);
 
-  // Load users when logged in
+  // Updated fetchMutualConnections to use the followers/following data from user documents
+  const fetchMutualConnections = async () => {
+    if (!auth.currentUser) return;
+    
+    try {
+      // Get the current user's data including following/followers
+      const userDocRef = doc(db, "users", auth.currentUser.uid);
+      const userDocSnap = await getDoc(userDocRef);
+      
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        const following = userData.following || [];
+        const followers = userData.followers || [];
+        
+        // Find mutual connections (users who are both in following and followers arrays)
+        const mutual = following.filter(id => followers.includes(id));
+        setMutualFollowers(mutual);
+      } else {
+        console.log("No user document found!");
+        setMutualFollowers([]);
+      }
+    } catch (error) {
+      console.error("Error fetching mutual connections:", error);
+      setMutualFollowers([]);
+    }
+  };
+
+  // Load users when logged in - now filtered to mutual followers
   useEffect(() => {
     if (!auth.currentUser) return;
 
+    // First fetch mutual connections
+    fetchMutualConnections();
+    
+    // Set up listener for all users, we'll filter them later
     const q = query(collection(db, "users"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const usersList: User[] = snapshot.docs
@@ -63,11 +97,16 @@ export default function ChatListScreen() {
             firstName: data.firstName || "",
             lastName: data.lastName || "",
             profileImage: data.profileImage || "https://via.placeholder.com/150",
+            followers: data.followers || [],
+            following: data.following || []
           };
         })
         .filter((user) => user.uid !== auth.currentUser?.uid);
 
       setUsers(usersList);
+      
+      // Since users data changed, we need to refresh mutual connections
+      fetchMutualConnections();
     });
 
     return () => unsubscribe();
@@ -88,6 +127,9 @@ export default function ChatListScreen() {
     const unsubscribes: (() => void)[] = [];
 
     users.forEach((user) => {
+      // Only get messages from mutual followers
+      if (!mutualFollowers.includes(user.uid)) return;
+      
       const chatId = [auth.currentUser?.uid, user.uid].sort().join("_");
       const messagesRef = collection(db, "chats", chatId, "messages");
       
@@ -117,7 +159,7 @@ export default function ChatListScreen() {
     return () => {
       unsubscribes.forEach((unsubscribe) => unsubscribe());
     };
-  }, [users]);
+  }, [users, mutualFollowers]);
 
   // Load messages when a user is selected
   useEffect(() => {
@@ -162,23 +204,25 @@ export default function ChatListScreen() {
 
   // Sort users by most recent message timestamp
   const sortedUsers = useMemo(() => {
-    return [...users].sort((a, b) => {
-      const messageA = recentMessages[a.uid];
-      const messageB = recentMessages[b.uid];
-      
-      // If no messages, put at the end
-      if (!messageA && !messageB) return 0;
-      if (!messageA) return 1;
-      if (!messageB) return -1;
-      
-      // Get timestamps (or 0 if not available)
-      const timeA = messageA.timestamp?.toMillis ? messageA.timestamp.toMillis() : 0;
-      const timeB = messageB.timestamp?.toMillis ? messageB.timestamp.toMillis() : 0;
-      
-      // Sort in descending order (newest first)
-      return timeB - timeA;
-    });
-  }, [users, recentMessages]);
+    return [...users]
+      .filter(user => mutualFollowers.includes(user.uid)) // Only include mutual followers
+      .sort((a, b) => {
+        const messageA = recentMessages[a.uid];
+        const messageB = recentMessages[b.uid];
+        
+        // If no messages, put at the end
+        if (!messageA && !messageB) return 0;
+        if (!messageA) return 1;
+        if (!messageB) return -1;
+        
+        // Get timestamps (or 0 if not available)
+        const timeA = messageA.timestamp?.toMillis ? messageA.timestamp.toMillis() : 0;
+        const timeB = messageB.timestamp?.toMillis ? messageB.timestamp.toMillis() : 0;
+        
+        // Sort in descending order (newest first)
+        return timeB - timeA;
+      });
+  }, [users, recentMessages, mutualFollowers]);
 
   // Auto-scroll to the bottom when messages change or when a chat is opened
   useEffect(() => {
@@ -337,62 +381,70 @@ export default function ChatListScreen() {
   return (
     <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
       <Text style={[styles.header, { color: Colors[theme].text }]}>Messages</Text>
-      <FlatList
-        data={sortedUsers}
-        keyExtractor={(item) => item.uid}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[
-              styles.userItem,
-              { 
-                backgroundColor: theme === "light" ? "#E89600" : "#E89600", // Orange in both modes
-              }
-            ]}
-            onPress={() => openChat(item)}
-          >
-            <View style={styles.userInfo}>
-              {/* Notification dot for unread messages */}
+      {sortedUsers.length === 0 ? (
+        <View style={styles.emptyStateContainer}>
+          <Text style={[styles.emptyStateText, { color: Colors[theme].text }]}>
+            No mutual connections found. Connect with other users to start messaging.
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={sortedUsers}
+          keyExtractor={(item) => item.uid}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[
+                styles.userItem,
+                { 
+                  backgroundColor: theme === "light" ? "#E89600" : "#E89600", // Orange in both modes
+                }
+              ]}
+              onPress={() => openChat(item)}
+            >
+              <View style={styles.userInfo}>
+                {/* Notification dot for unread messages */}
                 {unreadCounts[item.uid] > 0 && (
-                <View
-                  style={[
-                  styles.notificationDot,
-                  { backgroundColor: Colors[theme].text },
-                  ]}
-                />
+                  <View
+                    style={[
+                      styles.notificationDot,
+                      { backgroundColor: Colors[theme].text },
+                    ]}
+                  />
                 )}
-              
-              <Image
-                source={{ uri: item.profileImage }}
-                style={styles.profileImage}
-              />
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={[
-                    styles.username,
-                    { 
-                      color: theme === "light" ? "#fff" : "#000",
-                      textAlign: "left",
-                    }
-                  ]}
-                >
-                  {item.username || `${item.firstName} ${item.lastName}`}
-                </Text>
-                <Text
-                  style={[
-                    styles.recentMessage,
-                    { 
-                      color: theme === "light" ? "#fff" : "#000",
-                      textAlign: "left",
-                    }
-                  ]}
-                >
-                  {recentMessages[item.uid]?.text || "No recent messages"}
-                </Text>
+                
+                <Image
+                  source={{ uri: item.profileImage }}
+                  style={styles.profileImage}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={[
+                      styles.username,
+                      { 
+                        color: theme === "light" ? "#fff" : "#000",
+                        textAlign: "left",
+                      }
+                    ]}
+                  >
+                    {item.username || `${item.firstName} ${item.lastName}`}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.recentMessage,
+                      { 
+                        color: theme === "light" ? "#fff" : "#000",
+                        textAlign: "left",
+                      }
+                    ]}
+                  >
+                    {recentMessages[item.uid]?.text || "No recent messages"}
+                  </Text>
+                </View>
               </View>
-            </View>
-          </TouchableOpacity>
-        )}
-      />
+            </TouchableOpacity>
+          )}
+        />
+      )}
     </View>
   );
 }
@@ -542,5 +594,16 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     marginRight: 10,
+  },
+  emptyStateContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
   },
 });
