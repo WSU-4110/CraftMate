@@ -2,9 +2,9 @@ import { StyleSheet } from "react-native";
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 36,
     flexGrow: 1,
     padding: 20,
+    paddingTop: 0,
   },
   title: {
     fontSize: 32,
@@ -36,14 +36,6 @@ const styles = StyleSheet.create({
   footer: {
     marginTop: 20,
     alignItems: "center",
-  },
-  footerText: {
-    fontSize: 14,
-    color: "#333", // Dark gray
-  },
-  footerLink: {
-    color: "#E89600", // Match CraftMate's orange
-    fontWeight: "bold",
   },
   // New styles from provided code
   mediaPreviewContainer: {
@@ -92,23 +84,21 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   headerContainer: {
-    flexDirection: "row",
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 16,
+    marginTop: 40, // Added top margin to prevent clipping
+    textAlign: "center",
+    flexDirection: 'row',
     alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 20,
-    marginTop: 30,
-    position: "relative",
+    justifyContent: "center", // Center the username text
+    position: "relative", // Ensure proper positioning for the back button
   },
-  backButton: {
-    position: "absolute",
-    left: 0,
-    paddingVertical: 10,
-    zIndex: 1,
-  },
-  header: {
+  headerText: {
     fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
+    marginTop: 20, // Move the header text down
   },
   topPadding: {
     paddingTop: 8,
@@ -187,6 +177,10 @@ const styles = StyleSheet.create({
     color: 'red',
     marginLeft: 8,
   },
+  footerLink: {
+    color: "#E89600", // Match CraftMate's orange
+    fontWeight: "bold",
+  }
 });
 
 export default styles;

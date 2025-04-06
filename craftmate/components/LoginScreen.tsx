@@ -7,7 +7,7 @@ import * as ImagePicker from "expo-image-picker";
 import Toast from "react-native-toast-message";
 import { useColorScheme } from "react-native";
 import { Colors } from "../constants/Colors";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import styles from "./LoginScreen.styles";
 import * as ImageManipulator from "expo-image-manipulator";
 import * as FileSystem from 'expo-file-system';
@@ -45,11 +45,13 @@ export default function LoginScreen() {
     profileImage: "",
     tags: [] as string[],
     isActive: false, // Add isActive to the local state
+    username: "", // Add username to the local state
   });
   const [editingBio, setEditingBio] = useState(false);
   const [bioText, setBioText] = useState("");
 
   const theme = useColorScheme() || "light";
+  const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -74,8 +76,10 @@ export default function LoginScreen() {
         const data = userSnap.data() as any;
         setProfile({
           ...data,
+          name: `${data.firstName || ""} ${data.lastName || ""}`.trim(), // Use firstName and lastName for "Name:"
+          username: data.username || "", // Fetch username for the header
           tags: data.tags || [],
-          isActive: data.isActive || false, // Ensure isActive is included in profile state
+          isActive: data.isActive || false,
         });
         setBioText(data.bio || "");
       } else {
@@ -155,7 +159,7 @@ export default function LoginScreen() {
       await updateIsActiveStatus(user.uid, false);
       await signOut(auth);
       setUser(null);
-      setProfile({ name: "", bio: "", profileImage: "", tags: [], isActive: false });
+      setProfile({ name: "", bio: "", profileImage: "", tags: [], isActive: false, username: "" });
       Toast.show({ type: "success", text1: "Signed Out" });
     }
   };
@@ -224,93 +228,92 @@ export default function LoginScreen() {
   // Render UI when user is logged in
   if (user) {
     return (
-      <ScrollView
-        contentContainerStyle={[styles.container, { backgroundColor: Colors[theme].background }]}
-      >
-        <Text style={[styles.title, { color: Colors[theme].text }]}>Profile</Text>
-
-        <TouchableOpacity onPress={handlePickImage}>
-          <Image
-            source={{
-              uri: profile.profileImage.startsWith('data:image/')
-                ? profile.profileImage // Base64 string
-                : profile.profileImage || "https://via.placeholder.com/150", // URI or placeholder
-            }}
+      <View style={{ flex: 1, backgroundColor: Colors[theme].background }}>
+        {/* Profile Header */}
+        <View style={styles.headerContainer}>
+          <Text style={[styles.headerText, { color: Colors[theme].text }]}>
+            {profile.username || "Profile"} {/* Display username in the header */}
+          </Text>
+          <TouchableOpacity
             style={{
-              width: 120, // Adjusted size
-              height: 120, // Adjusted size
-              borderRadius: 60, // Circular shape
-              alignSelf: "center",
-              marginBottom: 15,
-              borderWidth: 2,
-              borderColor: "#E89600",
+              position: "absolute",
+              top: 10,
+              right: 10,
+              padding: 10,
+              backgroundColor: Colors[theme].inputBackground,
+              borderRadius: 5,
             }}
-          />
-        </TouchableOpacity>
-
-        <Text style={[styles.text, { color: Colors[theme].text }]}>Name: {profile.name}</Text>
-        <Text style={[styles.text, { color: Colors[theme].text }]}>Email: {user.email}</Text>
-        <Text style={[styles.text, { color: Colors[theme].text }]}>Status: {profile.isActive ? 'Active' : 'Inactive'}</Text>
-
-        {/* Bio Editing */}
-        <View style={styles.bioContainer}>
-          {editingBio ? (
-            <>
-              <TextInput
-                style={[styles.input, { color: Colors[theme].text }]}
-                value={bioText}
-                onChangeText={setBioText}
-                multiline
-                placeholder="Edit your bio"
-                placeholderTextColor={Colors[theme].icon}
-              />
-              <TouchableOpacity style={styles.button} onPress={handleBioSubmit}>
-                <Text style={styles.buttonText}>Save Bio</Text>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <>
-              <Text style={[styles.text, { color: Colors[theme].text }]}>
-                Bio: {profile.bio || "No bio available."}
-              </Text>
-              <TouchableOpacity style={styles.button} onPress={() => setEditingBio(true)}>
-                <Text style={styles.buttonText}>Edit Bio</Text>
-              </TouchableOpacity>
-            </>
-          )}
+            onPress={handleSignOut}
+          >
+            <Text style={{ color: Colors[theme].text }}>Sign Out</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Tags UI */}
-        <Text style={[styles.radioText, { marginTop: 20, color: Colors[theme].text }]}>Tags:</Text>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-          {[...new Set([...PRESET_TAGS, ...profile.tags.filter(t => !PRESET_TAGS.includes(t))]), "+"].map((tag) => (
-            <TouchableOpacity
-              key={tag}
-              onPress={() => (tag === "+" ? addCustomTag() : toggleTag(tag))}
-              style={{
-                backgroundColor: tag === "+" ? Colors[theme].inputBackground : profile.tags.includes(tag) ? "#E89600" : Colors[theme].inputBackground,
-                paddingVertical: 8,
-                paddingHorizontal: tag === "+" ? 12 : 14,
-                borderRadius: 20,
-                marginVertical: 4,
-                borderWidth: 1,
-                borderColor: tag === "+" ? "#aaa" : "transparent",
+        <ScrollView
+          contentContainerStyle={[
+            styles.container,
+            { alignItems: "center" } // Center content horizontally
+          ]}
+        >
+          <TouchableOpacity onPress={handlePickImage}>
+            <Image
+              source={{
+                uri: profile.profileImage.startsWith('data:image/')
+                  ? profile.profileImage // Base64 string
+                  : profile.profileImage || "https://via.placeholder.com/150", // URI or placeholder
               }}
-            >
-              <Text style={{
-                color: tag === "+" ? "#aaa" : profile.tags.includes(tag) ? "#fff" : textColor,
-              }}>
-                {tag}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+              style={{
+                width: 120, // Adjusted size
+                height: 120, // Adjusted size
+                borderRadius: 60, // Circular shape
+                alignSelf: "center",
+                marginBottom: 10,
+                borderWidth: 2,
+                borderColor: "#E89600",
+              }}
+            />
+          </TouchableOpacity>
 
-        {/* Sign Out Button */}
-        <TouchableOpacity style={[styles.button, { position: "absolute", bottom: 20, left: 20, right: 20 }]} onPress={handleSignOut}>
-          <Text style={styles.buttonText}>Sign Out</Text>
-        </TouchableOpacity>
-      </ScrollView>
+          <Text style={[styles.text, { color: Colors[theme].text, textAlign: "center" }]}>
+            {profile.name}
+          </Text>
+          
+          <Text style={[styles.text, { color: Colors[theme].text, marginTop: 15 }]}>
+            Bio: {profile.bio || "No bio available."}
+          </Text>
+          
+          {/* Display tags as read-only */}
+          {profile.tags.length > 0 && (
+            <View style={{ marginTop: 20, width: '100%' }}>
+              <Text style={[styles.radioText, { color: Colors[theme].text }]}>Tags:</Text>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+                {profile.tags.map((tag) => (
+                  <View
+                    key={tag}
+                    style={{
+                      backgroundColor: "#E89600",
+                      paddingVertical: 8,
+                      paddingHorizontal: 14,
+                      borderRadius: 20,
+                      marginVertical: 4,
+                    }}
+                  >
+                    <Text style={{ color: "#fff" }}>{tag}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+          
+          {/* Edit Profile Button */}
+          <TouchableOpacity 
+            style={[styles.button, { width: '80%', marginTop: 30 }]} 
+            onPress={() => router.push("pages/editprofile")}
+          >
+            <Text style={styles.buttonText}>Edit Profile</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
     );
   }
 
