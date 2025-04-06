@@ -531,16 +531,37 @@ export default function LoginScreen() {
             />
           </TouchableOpacity>
 
-          <Text style={[styles.text, { color: Colors[theme].text, textAlign: "center" }]}>
+            <Text style={[styles.text, { color: Colors[theme].text, textAlign: "center", fontWeight: "bold", fontSize: 18 }]}>
             {profile.name}
-          </Text>
+            </Text>
+          
+          {/* Display tags directly under bio/name */}
+          {profile.tags.length > 0 && (
+            <View style={{ marginVertical: 10, width: '100%', alignItems: 'center' }}>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, justifyContent: 'center' }}>
+                {profile.tags.map((tag) => (
+                  <View
+                    key={tag}
+                    style={{
+                      backgroundColor: "#E89600",
+                      paddingVertical: 8,
+                      paddingHorizontal: 14,
+                      borderRadius: 20,
+                      marginVertical: 4,
+                    }}
+                  >
+                    <Text style={{ color: Colors[theme].background }}>{tag}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
           
           {/* Stats Row (Posts, Followers, Following) */}
           <View style={{ 
             flexDirection: 'row', 
             justifyContent: 'space-around', 
             width: '100%',
-            paddingVertical: 15,
           }}>
             {/* Posts Count */}
             <View style={{ 
@@ -578,44 +599,22 @@ export default function LoginScreen() {
           </View>
           
           <View>
-            <Text style={[styles.text, { color: Colors[theme].text }]}>
+            <Text style={[styles.text, { color: Colors[theme].text, marginTop: 10 }]}>
               {profile.bio || "No bio available."}
             </Text>
           </View>
           
-          {/* Display tags directly under bio */}
-          {profile.tags.length > 0 && (
-            <View style={{ marginTop: 10, width: '100%', alignItems: 'center' }}>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, justifyContent: 'center' }}>
-                {profile.tags.map((tag) => (
-                  <View
-                    key={tag}
-                    style={{
-                      backgroundColor: "#E89600",
-                      paddingVertical: 8,
-                      paddingHorizontal: 14,
-                      borderRadius: 20,
-                      marginVertical: 4,
-                    }}
-                  >
-                    <Text style={{ color: "#fff" }}>{tag}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-          
           {/* Edit Profile Button */}
-          <TouchableOpacity 
-            style={[styles.editButton]} 
+            <TouchableOpacity 
+            style={[styles.editButton, { marginTop: 30 }]} 
             onPress={() => router.push("pages/editprofile")}
-          >
+            >
             <Text style={styles.buttonText}>Edit Profile</Text>
-          </TouchableOpacity>
+            </TouchableOpacity>
           
           {/* User's Posts Section */}
-          <View style={{ width: '100%', marginTop: 20 }}>
-            <Text style={[styles.text, { color: Colors[theme].text, marginBottom: 10, fontSize: 18 }]}>
+          <View style={{ width: '100%', marginTop: 10 }}>
+            <Text style={[styles.text, { color: Colors[theme].text, fontSize: 18, fontWeight: 'bold' }]}>
               My Posts
             </Text>
             

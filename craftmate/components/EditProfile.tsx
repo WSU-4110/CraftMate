@@ -4,7 +4,7 @@ import { useColorScheme } from "react-native";
 import { auth, db } from "../constants/firebaseConfig";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { Colors } from "../constants/Colors";
-import styles from "./LoginScreen.styles";
+import styles from "./EditProfile.styles";
 import Toast from "react-native-toast-message";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -27,6 +27,9 @@ export default function EditProfileScreen() {
     lastName: "",
   });
   const [bioText, setBioText] = useState("");
+  const [usernameText, setUsernameText] = useState("");
+  const [firstNameText, setFirstNameText] = useState("");
+  const [lastNameText, setLastNameText] = useState("");
   const theme = useColorScheme() || "light";
   const router = useRouter();
   const textColor = theme === "dark" ? "#fff" : "#000";
@@ -60,6 +63,9 @@ export default function EditProfileScreen() {
           lastName: data.lastName || "",
         });
         setBioText(data.bio || "");
+        setUsernameText(data.username || "");
+        setFirstNameText(data.firstName || "");
+        setLastNameText(data.lastName || "");
       } else {
         console.log("No user profile document exists yet");
       }
@@ -109,13 +115,12 @@ export default function EditProfileScreen() {
 
   const saveAndGoBack = async () => {
     try {
-      // Ensure bio and other fields are updated
+      // Ensure all fields are updated
       await updateProfile({ 
         bio: bioText,
-        // Include all fields that might have changed
-        username: profile.username,
-        firstName: profile.firstName,
-        lastName: profile.lastName
+        username: usernameText,
+        firstName: firstNameText,
+        lastName: lastNameText
       });
       
       Toast.show({ 
@@ -138,27 +143,80 @@ export default function EditProfileScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors[theme].background }}>
-      {/* Header */}
-      <View style={styles.headerContainer}>
-        <TouchableOpacity
-          style={{ position: "absolute", left: 10, top: 10 }}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color={Colors[theme].text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerText, { color: Colors[theme].text }]}>
-          Edit Profile
-        </Text>
-      </View>
-
       <ScrollView contentContainerStyle={styles.container}>
-        {/* Bio Editing */}
-        <Text style={[styles.radioText, { color: Colors[theme].text, marginBottom: 8 }]}>Bio:</Text>
+        {/* Header */}
+        <View style={styles.headerContainer}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="arrow-back" size={24} color={Colors[theme].text} />
+          </TouchableOpacity>
+          <Text style={[styles.header, { color: Colors[theme].text }]}>
+            Edit Profile
+          </Text>
+        </View>
+        
+        {/* Username Field */}
+        <Text style={[styles.labelText, { color: Colors[theme].text }]}>Username:</Text>
         <TextInput
           style={[
             styles.input, 
             { 
               color: Colors[theme].text,
+              backgroundColor: Colors[theme].inputBackground,
+              borderColor: Colors[theme].border 
+            }
+          ]}
+          value={usernameText}
+          onChangeText={setUsernameText}
+          placeholder="Enter username"
+          placeholderTextColor={Colors[theme].icon}
+        />
+        
+        {/* First Name Field */}
+        <Text style={[styles.labelText, { color: Colors[theme].text }]}>First Name:</Text>
+        <TextInput
+          style={[
+            styles.input, 
+            { 
+              color: Colors[theme].text,
+              backgroundColor: Colors[theme].inputBackground,
+              borderColor: Colors[theme].border 
+            }
+          ]}
+          value={firstNameText}
+          onChangeText={setFirstNameText}
+          placeholder="Enter first name"
+          placeholderTextColor={Colors[theme].icon}
+        />
+        
+        {/* Last Name Field */}
+        <Text style={[styles.labelText, { color: Colors[theme].text }]}>Last Name:</Text>
+        <TextInput
+          style={[
+            styles.input, 
+            { 
+              color: Colors[theme].text,
+              backgroundColor: Colors[theme].inputBackground,
+              borderColor: Colors[theme].border 
+            }
+          ]}
+          value={lastNameText}
+          onChangeText={setLastNameText}
+          placeholder="Enter last name"
+          placeholderTextColor={Colors[theme].icon}
+        />
+
+        {/* Bio Editing */}
+        <Text style={[styles.labelText, { color: Colors[theme].text }]}>Bio:</Text>
+        <TextInput
+          style={[
+            styles.input, 
+            { 
+              color: Colors[theme].text,
+              backgroundColor: Colors[theme].inputBackground,
+              borderColor: Colors[theme].border,
               height: 100,
               textAlignVertical: 'top',
               paddingTop: 10
@@ -172,25 +230,42 @@ export default function EditProfileScreen() {
         />
 
         {/* Tags UI */}
-        <Text style={[styles.radioText, { marginTop: 20, color: Colors[theme].text }]}>Tags:</Text>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 }}>
-          {[...new Set([...PRESET_TAGS, ...profile.tags.filter(t => !PRESET_TAGS.includes(t))]), "+"].map((tag) => (
+        <Text style={[styles.labelText, { color: Colors[theme].text }]}>Tags:</Text>
+        <View style={styles.tagContainer}>
+          {[
+            ...new Set([...PRESET_TAGS, ...profile.tags.filter(t => !PRESET_TAGS.includes(t))]),
+            "+"
+          ].map((tag) => (
             <TouchableOpacity
               key={tag}
               onPress={() => (tag === "+" ? addCustomTag() : toggleTag(tag))}
-              style={{
-                backgroundColor: tag === "+" ? Colors[theme].inputBackground : profile.tags.includes(tag) ? "#E89600" : Colors[theme].inputBackground,
-                paddingVertical: 8,
-                paddingHorizontal: tag === "+" ? 12 : 14,
-                borderRadius: 20,
-                marginVertical: 4,
-                borderWidth: 1,
-                borderColor: tag === "+" ? "#aaa" : "transparent",
-              }}
+              style={[
+                styles.tagButton,
+                tag === "+" ? styles.addTagButton : null,
+                {
+                  backgroundColor: 
+                    tag === "+" 
+                      ? Colors[theme].inputBackground 
+                      : profile.tags.includes(tag) 
+                        ? "#E89600" 
+                        : Colors[theme].inputBackground,
+                  borderWidth: tag === "+" ? 1 : 0,
+                  borderColor: tag === "+" ? "#aaa" : "transparent"
+                }
+              ]}
             >
-              <Text style={{
-                color: tag === "+" ? "#aaa" : profile.tags.includes(tag) ? "#fff" : textColor,
-              }}>
+              <Text style={[
+                styles.tagButtonText,
+                tag === "+" ? styles.addTagButtonText : null,
+                {
+                  color: 
+                    tag === "+" 
+                      ? "#aaa" 
+                      : profile.tags.includes(tag) 
+                        ? "#fff" 
+                        : textColor
+                }
+              ]}>
                 {tag}
               </Text>
             </TouchableOpacity>
@@ -199,10 +274,10 @@ export default function EditProfileScreen() {
 
         {/* Save Button */}
         <TouchableOpacity 
-          style={[styles.button, { marginTop: 40 }]} 
+          style={[styles.submitButton, { marginTop: 40 }]} 
           onPress={saveAndGoBack}
         >
-          <Text style={styles.buttonText}>Save Profile</Text>
+          <Text style={styles.submitButtonText}>Save Profile</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
