@@ -21,11 +21,12 @@ For installation instructions, please see [INSTALLATION.md](./INSTALLATION.md).
 
 ## Authors
 
-- **Shahab Alriyashi** –  Backend API + Firebase Integration  - https://github.com/shab2022
-- **Keenan Dalati** – Frontend Development - https://github.com/Keekee810
-- **Warif Hussini** – Backend API + User Authentication - https://github.com/Waroof
-- **Anas Khouja** – Frontend Development - https://github.com/anaskhouja
-- **Darick Le** – Project Lead + Full Stack Developer – https://github.com/darickle
+- **Shahab Alriyashi** –  Backend API + Firebase Integration  - [@shab2022](https://github.com/shab2022)
+- **Keenan Dalati** – Frontend Development - [@Keekee810](https://github.com/Keekee810)
+- **Warif Hussini** – Backend API + User Authentication - [@Waroof](https://github.com/Waroof)
+- **Anas Khouja** – Frontend Development - [@anaskhouja](https://github.com/anaskhouja)
+
+- **Darick Le** – Project Lead + Full Stack Developer – [@darickle](https://github.com/darickle)
 
 
 ## Acknowledgments
@@ -34,5 +35,5 @@ For installation instructions, please see [INSTALLATION.md](./INSTALLATION.md).
 - **Our team members** for collaboration and development
 
 ## Supervision
- Arif Rahman, Lab Instructor, Winter'2025, CSC4110
+**Arif Rahman** - Lab Instructor - CSC4110 Winter 2025
 
