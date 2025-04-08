@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     borderRadius: 10, // Rounded corners for the active image
   },
   sliderImageInactive: {
-    borderRadius: 10, // Straight edges for adjacent images
+    borderRadius: 10, // Rounded corners for adjacent images
   },
   tagsContainer: {
     flexDirection: "row",
