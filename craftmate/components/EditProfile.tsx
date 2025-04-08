@@ -105,12 +105,7 @@ export default function EditProfileScreen() {
   };
 
   const addCustomTag = () => {
-    Alert.prompt("New Tag", "Enter custom tag", async (tag) => {
-      if (!tag) return;
-      const trimmed = tag.trim();
-      if (!trimmed || profile.tags.includes(trimmed)) return;
-      await updateProfile({ tags: [...profile.tags, trimmed] });
-    });
+    setIsModalVisible(true);
   };
 
   const saveAndGoBack = async () => {
