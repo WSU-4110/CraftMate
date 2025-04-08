@@ -1,71 +1,23 @@
 # CraftMate
 
-CraftMate is a DIY assistance platform that connects enthusiasts with experts for real-time guidance. Whether you’re into woodworking, electronics, arts & crafts, or home improvement, CraftMate provides expert advice through live chat and video call support, ensuring you get the help you need to complete your projects with confidence.
+CraftMate is a DIY assistance platform that connects enthusiasts with experts for real-time guidance. Whether you're into woodworking, electronics, arts & crafts, or home improvement, CraftMate provides expert advice through live chat and video call support, ensuring you get the help you need to complete your projects with confidence.
 
 In addition to expert consultations, CraftMate features a community-driven home feed where users can view inquiries, share progress, showcase completed projects, and exchange ideas with fellow DIYers. CraftMate fosters an engaging environment for enthusiasts of all skill levels.
 
-## Getting Started
+## Quick Start
 
-Follow these instructions to set up CraftMate on your local machine for development and testing.
-
-### Prerequisites
-
-Make sure you have the following installed before proceeding:
-- Node.js (v16 or later) – [Download here](https://nodejs.org/)
-- npm (comes with Node.js)
-- Expo CLI (for React Native development)
-- Expo Go App (install from the App Store or Google Play)
-- Firebase CLI (for backend setup)
-- Twilio Account (for video and chat functionality)
-
-To install these, run:
-
-```sh
-# Install Expo CLI
-npm install -g expo-cli
-
-# Install Firebase CLI
-npm install -g firebase-tools
-
-# Check installations
-node -v
-npm -v
-firebase --version
-expo --version
-```
-
-### Installing
-
-Clone the repository and navigate into the project directory:
-
-```sh
-# Clone the repository
-git clone https://github.com/WSU-4110/CraftMate.git
-
-# Go to CraftMate folder
-cd CraftMate
-```
-
-## Frontend Setup (React Native with Expo)
-
-Install dependencies:
-
-```sh
-cd craftmate
-npm install
-```
-
-Start the development server:
-
-```sh
-npx expo start
-```
-In the output, you'll find options to open the app.
+For installation instructions, please see [INSTALLATION.md](./INSTALLATION.md).
 
 ## Built With
 - **React Native** – Mobile app development
 - **Firebase** – Authentication, database, and backend functions
 - **Twilio** – Video calling and live chat
+
+## Project Documentation
+- [Installation Guide](./INSTALLATION.md) - Setup instructions for developers
+- [Daily Standup Meetings](https://github.com/WSU-4110/CraftMate/wiki/Daily-Standup-Meetings) - Sprint goals and task assignments
+- [Sprint Planning Meetings](https://github.com/WSU-4110/CraftMate/wiki/Sprint-Planning-Meetings) - Team reflections and improvements
+- [Sprint Retrospective](https://github.com/WSU-4110/CraftMate/wiki/Sprint-Retrospective) - Records of team meetings and discussions
 
 ## Authors
 
@@ -82,5 +34,5 @@ In the output, you'll find options to open the app.
 - **Our team members** for collaboration and development
 
 ## Supervision
- Arif Rahman, Lab Instructor,FALL'2025, CSC4110
+ Arif Rahman, Lab Instructor, Winter'2025, CSC4110
 
