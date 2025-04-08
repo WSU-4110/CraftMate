@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, Alert, ScrollView } from "react-native";
 import { useColorScheme } from "react-native";
 import { auth, db } from "../constants/firebaseConfig";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { Colors } from "../constants/Colors";
 import styles from "./EditProfile.styles";
 import Toast from "react-native-toast-message";
@@ -30,9 +30,11 @@ export default function EditProfileScreen() {
   const [usernameText, setUsernameText] = useState("");
   const [firstNameText, setFirstNameText] = useState("");
   const [lastNameText, setLastNameText] = useState("");
+  const [usernameError, setUsernameError] = useState("");
   const theme = useColorScheme() || "light";
   const router = useRouter();
   const textColor = theme === "dark" ? "#fff" : "#000";
+  const usernameTimer = React.useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -108,14 +110,125 @@ export default function EditProfileScreen() {
     setIsModalVisible(true);
   };
 
+  const validateFields = () => {
+    if (!usernameText.trim()) {
+      Toast.show({ 
+        type: "error", 
+        text1: "Username is required",
+        text2: "Please enter a username"
+      });
+      return false;
+    }
+    
+    if (!firstNameText.trim()) {
+      Toast.show({ 
+        type: "error", 
+        text1: "First Name is required",
+        text2: "Please enter your first name"
+      });
+      return false;
+    }
+    
+    if (!lastNameText.trim()) {
+      Toast.show({ 
+        type: "error", 
+        text1: "Last Name is required",
+        text2: "Please enter your last name"
+      });
+      return false;
+    }
+    
+    return true;
+  };
+
+  const isUsernameUnique = async (username: string): Promise<boolean> => {
+    // If username hasn't changed, no need to check
+    if (username.toLowerCase() === profile.username.toLowerCase()) {
+      return true;
+    }
+    
+    try {
+      const usersRef = collection(db, "users");
+      // Convert to lowercase for case-insensitive comparison
+      const lowercaseUsername = username.toLowerCase();
+      
+      // First, check for exact match
+      const exactQuery = query(usersRef, where("username", "==", username));
+      const exactSnapshot = await getDocs(exactQuery);
+      
+      if (!exactSnapshot.empty) {
+        return false;
+      }
+      
+      // Then check for case-insensitive matches
+      const allUsersQuery = query(usersRef);
+      const allUsersSnapshot = await getDocs(allUsersQuery);
+      
+      // Check if any username matches case-insensitively
+      const caseInsensitiveMatch = allUsersSnapshot.docs.some(
+        doc => doc.data().username && 
+        doc.data().username.toLowerCase() === lowercaseUsername
+      );
+      
+      return !caseInsensitiveMatch;
+    } catch (error) {
+      console.error("Error checking username uniqueness:", error);
+      return false;
+    }
+  };
+
+  const checkUsernameAvailability = async (username: string) => {
+    if (!username.trim()) {
+      setUsernameError("");
+      return;
+    }
+    
+    const isUnique = await isUsernameUnique(username);
+    if (!isUnique) {
+      setUsernameError("Username already taken");
+    } else {
+      setUsernameError("");
+    }
+  };
+
+  const handleUsernameChange = (text: string) => {
+    setUsernameText(text);
+    // Debounce the check to avoid too many Firestore queries
+    clearTimeout(usernameTimer.current);
+    usernameTimer.current = setTimeout(() => checkUsernameAvailability(text), 500);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (usernameTimer.current) {
+        clearTimeout(usernameTimer.current);
+      }
+    };
+  }, []);
+
   const saveAndGoBack = async () => {
+    if (!validateFields()) {
+      return;
+    }
+    
+    // Check username uniqueness
+    const usernameUnique = await isUsernameUnique(usernameText.trim());
+    if (!usernameUnique) {
+      Toast.show({
+        type: "error",
+        text1: "Username already exists",
+        text2: "Usernames are case-insensitive. Please choose a different username."
+      });
+      return;
+    }
+    
     try {
       // Ensure all fields are updated
       await updateProfile({ 
         bio: bioText,
-        username: usernameText,
-        firstName: firstNameText,
-        lastName: lastNameText
+        username: usernameText.trim(),
+        firstName: firstNameText.trim(),
+        lastName: lastNameText.trim()
       });
       
       Toast.show({ 
@@ -136,6 +249,9 @@ export default function EditProfileScreen() {
     }
   };
 
+  // Check if save button should be enabled
+  const isFormValid = usernameText.trim() && firstNameText.trim() && lastNameText.trim();
+
   return (
     <View style={{ flex: 1, backgroundColor: Colors[theme].background }}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -153,31 +269,37 @@ export default function EditProfileScreen() {
         </View>
         
         {/* Username Field */}
-        <Text style={[styles.labelText, { color: Colors[theme].text }]}>Username:</Text>
+        <Text style={[styles.labelText, { color: Colors[theme].text }]}>Username: *</Text>
         <TextInput
           style={[
             styles.input, 
             { 
               color: Colors[theme].text,
               backgroundColor: Colors[theme].inputBackground,
-              borderColor: Colors[theme].border 
+              borderColor: usernameError ? "#ff6b6b" : !usernameText.trim() ? "#ff6b6b" : Colors[theme].border 
             }
           ]}
           value={usernameText}
-          onChangeText={setUsernameText}
+          onChangeText={handleUsernameChange}
           placeholder="Enter username"
           placeholderTextColor={Colors[theme].icon}
+          autoCapitalize="none"
         />
+        {usernameError ? (
+          <Text style={{ color: "#ff6b6b", marginTop: 5, marginBottom: 10 }}>
+            {usernameError}
+          </Text>
+        ) : null}
         
         {/* First Name Field */}
-        <Text style={[styles.labelText, { color: Colors[theme].text }]}>First Name:</Text>
+        <Text style={[styles.labelText, { color: Colors[theme].text }]}>First Name: *</Text>
         <TextInput
           style={[
             styles.input, 
             { 
               color: Colors[theme].text,
               backgroundColor: Colors[theme].inputBackground,
-              borderColor: Colors[theme].border 
+              borderColor: !firstNameText.trim() ? "#ff6b6b" : Colors[theme].border 
             }
           ]}
           value={firstNameText}
@@ -187,14 +309,14 @@ export default function EditProfileScreen() {
         />
         
         {/* Last Name Field */}
-        <Text style={[styles.labelText, { color: Colors[theme].text }]}>Last Name:</Text>
+        <Text style={[styles.labelText, { color: Colors[theme].text }]}>Last Name: *</Text>
         <TextInput
           style={[
             styles.input, 
             { 
               color: Colors[theme].text,
               backgroundColor: Colors[theme].inputBackground,
-              borderColor: Colors[theme].border 
+              borderColor: !lastNameText.trim() ? "#ff6b6b" : Colors[theme].border 
             }
           ]}
           value={lastNameText}
@@ -269,8 +391,15 @@ export default function EditProfileScreen() {
 
         {/* Save Button */}
         <TouchableOpacity 
-          style={[styles.submitButton, { marginTop: 40 }]} 
+          style={[
+            styles.submitButton, 
+            { 
+              marginTop: 40,
+              opacity: isFormValid ? 1 : 0.6 
+            }
+          ]} 
           onPress={saveAndGoBack}
+          disabled={!isFormValid}
         >
           <Text style={styles.submitButtonText}>Save Profile</Text>
         </TouchableOpacity>
