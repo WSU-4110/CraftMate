@@ -55,7 +55,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     padding: 16,
     borderRadius: 12,
-    marginBottom: 12,
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -100,7 +99,7 @@ export default function ProfAppointmentComp() {
       const timeout = setTimeout(() => {
         setShowUndo(false);
         setLastRemoved(null);
-      }, 5000); // 5 seconds to undo
+      }, 5000);
 
       return () => clearTimeout(timeout);
     }
@@ -156,20 +155,44 @@ export default function ProfAppointmentComp() {
       },
     });
 
-    const animatedStyle = useAnimatedStyle(() => ({
+    const animatedCardStyle = useAnimatedStyle(() => ({
       transform: [{ translateX: translateX.value }],
     }));
 
+    const backgroundStyle = useAnimatedStyle(() => {
+      let opacity = Math.min(Math.abs(translateX.value) / SWIPE_THRESHOLD, 1);
+      return {
+        backgroundColor:
+              translateX.value > 0
+                ? `rgba(0, 200, 0, ${opacity * 0.5})`
+                : translateX.value < 0
+                ? `rgba(200, 0, 0, ${opacity * 0.5})`
+                : "transparent",
+
+      };
+    });
+
     return (
       <PanGestureHandler onGestureEvent={gestureHandler}>
-        <Animated.View style={[styles.card, animatedStyle]}>
-          <Image source={{ uri: placeholderImage }} style={styles.avatar} />
-          <View style={styles.infoContainer}>
-            <Text style={styles.name}>{item.customerName}</Text>
-            <Text style={styles.details}>
-              {item.date} at {item.time}
-            </Text>
-          </View>
+        <Animated.View style={{ marginBottom: 12 }}>
+          <Animated.View
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                borderRadius: 12,
+              },
+              backgroundStyle,
+            ]}
+          />
+          <Animated.View style={[styles.card, animatedCardStyle]}>
+            <Image source={{ uri: placeholderImage }} style={styles.avatar} />
+            <View style={styles.infoContainer}>
+              <Text style={styles.name}>{item.customerName}</Text>
+              <Text style={styles.details}>
+                {item.date} at {item.time}
+              </Text>
+            </View>
+          </Animated.View>
         </Animated.View>
       </PanGestureHandler>
     );
