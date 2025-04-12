@@ -13,14 +13,12 @@ import { auth, db } from '@/constants/firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
 
-
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   const [user, setUser] = useState(null);
   const [isActive, setIsActive] = useState(false);
 
-  // Function to update isActive status in Firestore
   const handleUserInactive = async (uid: string | null) => {
     if (!uid) return;
     try {
@@ -44,18 +42,16 @@ export default function TabLayout() {
   };
 
   useEffect(() => {
-    // Listen for authentication state changes
     const unsubscribeAuth = onAuthStateChanged(auth, async (authenticatedUser) => {
       setUser(authenticatedUser);
       if (authenticatedUser) {
         setIsActive(true);
-        await handleUserActive(authenticatedUser.uid); // Update Firestore when logged in
+        await handleUserActive(authenticatedUser.uid);
       } else {
-        await handleUserInactive(auth?.currentUser?.uid ?? ""); // Update Firestore on logout
+        await handleUserInactive(auth?.currentUser?.uid ?? "");
       }
     });
 
-    // Listen for AppState changes (detect background/inactive state)
     const appStateListener = AppState.addEventListener("change", async (nextAppState) => {
       if (nextAppState === "background" || nextAppState === "inactive") {
         await handleUserInactive(auth?.currentUser?.uid ?? "");
@@ -68,8 +64,8 @@ export default function TabLayout() {
     });
 
     return () => {
-      unsubscribeAuth(); // Unsubscribe Firebase listener
-      appStateListener.remove(); // Remove AppState listener
+      unsubscribeAuth();
+      appStateListener.remove();
     };
   }, []);
 
@@ -82,15 +78,11 @@ export default function TabLayout() {
           headerShown: false,
           tabBarButton: HapticTab,
           tabBarBackground: TabBarBackground,
-          tabBarShowLabel: false, // Hide the titles
-          tabBarItemStyle: { paddingVertical: 10 }, // Adjust the padding to lower the icons
-          tabBarStyle: { backgroundColor: '#E89600' }, // Fixed background color
+          tabBarShowLabel: false,
+          tabBarItemStyle: { paddingVertical: 10 },
+          tabBarStyle: { backgroundColor: '#E89600' },
         }}
       >
-        {/* Home Screen */}
-
-
-        {/* Chat List Screen (User List for Private Chats) */}
         <Tabs.Screen
           name="chat"
           options={{
@@ -103,28 +95,28 @@ export default function TabLayout() {
             tabBarIcon: ({ color }) => <IconSymbol size={32} name="house.fill" color={color} />,
           }}
         />
-        
-        {/* Login Screen */}
         <Tabs.Screen
           name="login"
           options={{
             tabBarIcon: ({ color }) => <IconSymbol size={32} name="person.crop.circle.fill" color={color} />,
           }}
         />
-        {/* Login Screen */}
         <Tabs.Screen
           name="video"
           options={{
-          tabBarIcon: ({ color }) => <IconSymbol size={32} name="video.fill" color={color} />,
-  }}
-/>
-
-
-        {/* Stack Navigation for Private Messages */}
+            tabBarIcon: ({ color }) => <IconSymbol size={32} name="video.fill" color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="profappointment"
+          options={{
+            tabBarIcon: ({ color }) => <IconSymbol size={32} name="video.fill" color={color} />,
+          }}
+        />
         <Tabs.Screen
           name="messages"
           options={{
-            href: null, 
+            href: null,
           }}
         />
       </Tabs>
