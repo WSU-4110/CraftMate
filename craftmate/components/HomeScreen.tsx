@@ -24,6 +24,7 @@ import {
   increment,
   getDoc,
   deleteDoc,  // Import deleteDoc from Firestore
+  arrayRemove, // Add arrayRemove import
 } from 'firebase/firestore';
 import { onAuthStateChanged, User, getAuth } from 'firebase/auth';
 import { db, auth } from '../constants/firebaseConfig';
@@ -165,10 +166,20 @@ const HomeScreen = () => {
             text: "Delete",
             onPress: async () => {
               try {
-                await deleteDoc(postRef);  // Delete the post from Firestore
+                // Delete the post from Firestore
+                await deleteDoc(postRef);
+                
+                // Update the user's post count and posts array in Firestore
+                const userRef = doc(db, "users", user.uid);
+                await updateDoc(userRef, {
+                  postCount: increment(-1),
+                  posts: arrayRemove(postId)
+                });
+                
                 console.log("Post deleted successfully!");
               } catch (error) {
                 console.error("Error deleting post:", error);
+                Alert.alert("Error", "Failed to delete post. Please try again.");
               }
             },
           },

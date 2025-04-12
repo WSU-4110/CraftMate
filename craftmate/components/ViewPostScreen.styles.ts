@@ -40,7 +40,8 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
     textAlign: "left",
-    marginVertical: 10,
+    marginTop: 1,
+    marginBottom: 10,
     // Removed paddingHorizontal
   },
   postContainer: {
@@ -98,7 +99,7 @@ const styles = StyleSheet.create({
   },
   imageSliderContainer: {
     marginVertical: 4,
-    height: 200, // Adjust height as needed
+    height: 350, // Adjust height as needed
   },
   sliderImage: {
     width: Dimensions.get("window").width - 40, // Full width for single image
@@ -109,7 +110,7 @@ const styles = StyleSheet.create({
     borderRadius: 10, // Rounded corners for the active image
   },
   sliderImageInactive: {
-    borderRadius: 0, // Straight edges for adjacent images
+    borderRadius: 10, // Rounded corners for adjacent images
   },
   tagsContainer: {
     flexDirection: "row",
@@ -121,6 +122,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 4,
     marginRight: 8,
+    marginBottom: 8,
   },
   tagText: {
     fontSize: 14,

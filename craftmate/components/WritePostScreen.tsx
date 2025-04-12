@@ -11,7 +11,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useColorScheme } from "react-native";
 import { Colors } from "../constants/Colors";
-import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc, increment, arrayUnion } from "firebase/firestore";
 import { db, auth } from "../constants/firebaseConfig";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
@@ -44,6 +44,9 @@ export default function WritePost() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]); // State for selected tags
   const [isTagMenuVisible, setIsTagMenuVisible] = useState(false); // State to toggle tag menu
   const TAG_OPTIONS = ["Cars", "Building", "Electricity", "Plumbing", "Painting", "Tools"]; // Predefined tags
+
+  const MAX_TITLE_LENGTH = 250; // Define max title length
+  const [isTitleMaxReached, setIsTitleMaxReached] = useState(false); // State to track if title length limit is reached
 
   useEffect(() => {
     const fetchUserDetails = async () => {
@@ -122,6 +125,17 @@ export default function WritePost() {
     });
   };
 
+  // Title character limit handler
+  const handleTitleChange = (text: string) => {
+    if (text.length <= MAX_TITLE_LENGTH) {
+      setPostTitle(text);
+      setIsTitleMaxReached(text.length === MAX_TITLE_LENGTH);
+    } else {
+      // Title exceeded max length, don't update state but update warning
+      setIsTitleMaxReached(true);
+    }
+  };
+
   const handleSubmitPost = async () => {
     if (!postTitle.trim()) {
       Alert.alert("Error", "Post title is required.");
@@ -153,7 +167,14 @@ export default function WritePost() {
       };
   
       // Add the post to Firestore
-      await addDoc(collection(db, "posts"), postData);
+      const postRef = await addDoc(collection(db, "posts"), postData);
+      
+      // Update the user's post count in Firestore
+      const userRef = doc(db, "users", user.uid);
+      await updateDoc(userRef, {
+        postCount: increment(1),
+        posts: arrayUnion(postRef.id)
+      });
   
       Alert.alert("Success", "Your post has been submitted!");
       setPostTitle(""); // Clear title
@@ -170,7 +191,6 @@ export default function WritePost() {
       setIsSubmitting(false);
     }
   };
-  
 
   return (
     <ScrollView
@@ -179,7 +199,7 @@ export default function WritePost() {
         { backgroundColor: Colors[theme].background },
       ]}
     >
-      <View style={styles.topPadding}>
+      <View>
         <View style={[styles.headerContainer]}>
           {/* Back Arrow */}
           <TouchableOpacity
@@ -207,8 +227,21 @@ export default function WritePost() {
           placeholder="Enter title..."
           placeholderTextColor={Colors[theme].icon}
           value={postTitle}
-          onChangeText={setPostTitle}
+          onChangeText={handleTitleChange}
+          maxLength={MAX_TITLE_LENGTH} // Add maxLength prop
         />
+        
+        {/* Character count and warning */}
+        <View style={styles.characterCountContainer}>
+          <Text style={[styles.characterCount, { color: isTitleMaxReached ? 'red' : Colors[theme].text }]}>
+            {postTitle.length}/{MAX_TITLE_LENGTH}
+          </Text>
+          {isTitleMaxReached && (
+            <Text style={styles.characterWarning}>
+              Maximum title length reached
+            </Text>
+          )}
+        </View>
 
         {/* Add Tags Button */}
         <TouchableOpacity
