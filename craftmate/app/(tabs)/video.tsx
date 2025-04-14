@@ -13,6 +13,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useColorScheme } from "react-native";
 import { auth, db } from "../../constants/firebaseConfig";
+
 import {
   collection,
   query,
@@ -21,6 +22,8 @@ import {
 } from "firebase/firestore";
 import { Colors } from "../../constants/Colors";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useRouter } from "expo-router";
+
 
 const categories = [
   { id: "1", name: "Cars", icon: "car-sport", color: "orange" },
@@ -41,6 +44,8 @@ export default function VideoScreen() {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [dateTimeSet, setDateTimeSet] = useState(false);
   const theme = useColorScheme() || "light";
+  const router = useRouter();
+
 
   useEffect(() => {
     const q = query(collection(db, "users"), where("isProfessional", "==", true));
@@ -127,6 +132,9 @@ export default function VideoScreen() {
                 marginTop: 10,
               }}
               onPress={() => setSelectedProfessional(item)}
+              onLongPress={() =>
+                router.push({ pathname: "/pages/ViewProfileScreen", params: { userId: item.id } })
+              }
             >
               <Image
                 source={{
