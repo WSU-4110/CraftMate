@@ -14,7 +14,7 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center", // Changed to center the content
+    justifyContent: "center",
     marginBottom: 10,
     marginTop: 30,
     position: "relative",
@@ -27,9 +27,9 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   headerContent: {
-    alignItems: "center", // Center the content
-    justifyContent: "center", // Center the content
-    flex: 1, // Take up available space
+    alignItems: "center",
+    justifyContent: "center",
+    flex: 1,
   },
   header: {
     fontSize: 24,
@@ -41,7 +41,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "left",
     marginVertical: 10,
-    // Removed paddingHorizontal
   },
   postContainer: {
     width: Dimensions.get("window").width - 40,
@@ -64,24 +63,24 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    alignSelf: "center", // Center the profile image
+    alignSelf: "center",
   },
   profileContainer: {
     marginTop: 2,
-    flexDirection: "row", // Arrange items horizontally
-    alignItems: "center", // Align items vertically in the center
-    justifyContent: "center", // Center the container horizontally
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
   username: {
     fontSize: 16,
     fontWeight: "bold",
-    marginLeft: 10, // Space between profile picture and username
+    marginLeft: 10,
   },
   timestamp: {
     fontSize: 12,
     color: "#888",
-    position: "absolute", // Position absolutely
-    right: 0, // Align to the right
+    position: "absolute",
+    right: 0,
   },
   postBody: {
     fontSize: 16,
@@ -98,18 +97,18 @@ const styles = StyleSheet.create({
   },
   imageSliderContainer: {
     marginVertical: 4,
-    height: 200, // Adjust height as needed
+    height: 200,
   },
   sliderImage: {
-    width: Dimensions.get("window").width - 40, // Full width for single image
+    width: Dimensions.get("window").width - 40,
     height: "100%",
-    borderRadius: 10, // Default rounded corners
+    borderRadius: 10,
   },
   sliderImageActive: {
-    borderRadius: 10, // Rounded corners for the active image
+    borderRadius: 10,
   },
   sliderImageInactive: {
-    borderRadius: 0, // Straight edges for adjacent images
+    borderRadius: 0,
   },
   tagsContainer: {
     flexDirection: "row",
@@ -134,8 +133,7 @@ const styles = StyleSheet.create({
   postActions: {
     flexDirection: "row",
   },
-  actionButton: {
-  },
+  actionButton: {},
   ovalContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -153,6 +151,58 @@ const styles = StyleSheet.create({
   scrollViewContent: {
     paddingBottom: 20,
   },
+  // New Styles
+  commentContainer: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
+  },
+  commentUsername: {
+    fontWeight: 'bold',
+  },
+  commentText: {
+    color: 'gray',
+  },
+  commentTimestamp: {
+    fontSize: 12,
+    color: 'lightgray',
+  },
+  likeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+  },
+  likeText: {
+    marginLeft: 10,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 22,
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalInput: {
+    width: '80%',
+    height: 40,
+    marginBottom: 20,
+    borderWidth: 1,
+    padding: 10,
+  }
 });
 
 export default styles;
