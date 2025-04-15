@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 20,
-    marginTop: 30,
+    marginTop: 36,
     position: "relative",
   },
   backButton: {
@@ -75,9 +75,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
-  },
-  topPadding: {
-    paddingTop: 8,
   },
   addTagsButton: {
     flexDirection: "row",
@@ -135,6 +132,21 @@ const styles = StyleSheet.create({
   radioText: {
     fontSize: 16,
     fontWeight: "bold",
+  },
+  characterCountContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginTop: -15,
+  },
+  characterCount: {
+    fontSize: 12,
+    textAlign: 'right',
+  },
+  characterWarning: {
+    fontSize: 12,
+    color: 'red',
+    marginLeft: 8,
   },
 });
 

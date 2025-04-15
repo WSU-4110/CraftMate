@@ -11,7 +11,8 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 
 import { auth, db } from '@/constants/firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
+
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -23,7 +24,14 @@ export default function TabLayout() {
     if (!uid) return;
     try {
       const userRef = doc(db, "users", uid);
-      await updateDoc(userRef, { isActive: false });
+      const userSnap = await getDoc(userRef);
+      
+      if (userSnap.exists()) {
+        await updateDoc(userRef, { isActive: false });
+      } else {
+        // Create the document if it doesn't exist
+        await setDoc(userRef, { isActive: false });
+      }
       console.log(`User ${uid} marked as inactive`);
     } catch (error) {
       console.error("Error updating user status:", error);
@@ -34,7 +42,20 @@ export default function TabLayout() {
     if (!uid) return;
     try {
       const userRef = doc(db, "users", uid);
-      await updateDoc(userRef, { isActive: true });
+      const userSnap = await getDoc(userRef);
+      
+      if (userSnap.exists()) {
+        await updateDoc(userRef, { isActive: true });
+      } else {
+        // Create the document if it doesn't exist
+        await setDoc(userRef, { 
+          isActive: true,
+          createdAt: new Date(),
+          email: auth.currentUser?.email || '',
+          displayName: auth.currentUser?.displayName || '',
+          photoURL: auth.currentUser?.photoURL || ''
+        });
+      }
       console.log(`User ${uid} marked as active`);
     } catch (error) {
       console.error("Error updating user status:", error);
@@ -121,7 +142,7 @@ export default function TabLayout() {
         />
       </Tabs>
 
-      {/* ✅ Add Toast globally */}
+      {/* Toast component */}
       <Toast />
     </>
   );
