@@ -9,7 +9,6 @@ import { Colors } from "../../constants/Colors";
 import { getAuth } from "firebase/auth";
 import { Ionicons } from "@expo/vector-icons";
 
-
 interface UserPost {
   id: string;
   username: string;
@@ -104,6 +103,10 @@ export default function ViewProfileScreen() {
     }
   };
 
+  const navigateToList = (type: "followers" | "following") => {
+    router.push(`/pages/followerFollowing?userId=${userId}&type=${type}`);
+  };
+
   if (!profile) return null;
 
   return (
@@ -123,7 +126,7 @@ export default function ViewProfileScreen() {
         <Text style={{ color: Colors[theme].text, marginBottom: 10 }}>
           {profile.bio || "No bio available."}
         </Text>
-  
+
         {isOwnProfile && (
           <TouchableOpacity
             style={{
@@ -138,7 +141,7 @@ export default function ViewProfileScreen() {
             <Text style={{ color: "#fff", fontWeight: "bold" }}>Edit Profile</Text>
           </TouchableOpacity>
         )}
-  
+
         {!isOwnProfile && (
           <TouchableOpacity
             style={{
@@ -155,7 +158,7 @@ export default function ViewProfileScreen() {
             </Text>
           </TouchableOpacity>
         )}
-  
+
         <View style={{ flexDirection: "row", justifyContent: "space-around", width: "100%", marginBottom: 10 }}>
           <View style={{ alignItems: "center", flex: 1 }}>
             <Text style={{ color: Colors[theme].text, fontWeight: "bold" }}>
@@ -163,20 +166,20 @@ export default function ViewProfileScreen() {
             </Text>
             <Text style={{ color: Colors[theme].text }}>Posts</Text>
           </View>
-          <View style={{ alignItems: "center", flex: 1 }}>
+          <TouchableOpacity style={{ alignItems: "center", flex: 1 }} onPress={() => navigateToList("followers")}>
             <Text style={{ color: Colors[theme].text, fontWeight: "bold" }}>
               {profile.followers?.length || 0}
             </Text>
             <Text style={{ color: Colors[theme].text }}>Followers</Text>
-          </View>
-          <View style={{ alignItems: "center", flex: 1 }}>
+          </TouchableOpacity>
+          <TouchableOpacity style={{ alignItems: "center", flex: 1 }} onPress={() => navigateToList("following")}>
             <Text style={{ color: Colors[theme].text, fontWeight: "bold" }}>
               {profile.following?.length || 0}
             </Text>
             <Text style={{ color: Colors[theme].text }}>Following</Text>
-          </View>
+          </TouchableOpacity>
         </View>
-  
+
         {profile.tags?.length > 0 && (
           <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", marginVertical: 10 }}>
             {profile.tags.map((tag: string) => (
@@ -195,12 +198,12 @@ export default function ViewProfileScreen() {
             ))}
           </View>
         )}
-  
+
         <View style={{ width: "100%", alignItems: "center" }}>
           <Text style={{ fontSize: 16, fontWeight: "bold", color: Colors[theme].text, marginVertical: 10 }}>
             Posts
           </Text>
-  
+
           {userPosts.length === 0 ? (
             <View style={{ alignItems: "center", marginTop: 20 }}>
               <Ionicons name="image-outline" size={60} color={Colors[theme].text} />
@@ -215,7 +218,7 @@ export default function ViewProfileScreen() {
                   onPress={() => router.push(`/pages/viewpost?postId=${item.id}`)}
                   style={{
                     marginBottom: 20,
-                    backgroundColor: Colors[theme].card || "#222222",
+                    backgroundColor: Colors[theme].tint || "#222222",
                     padding: 10,
                     borderRadius: 10,
                     width: "100%",
@@ -241,4 +244,4 @@ export default function ViewProfileScreen() {
       </ScrollView>
     </View>
   );
-}  
+}
