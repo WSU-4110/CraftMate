@@ -5,6 +5,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     alignItems: 'center',
+    paddingBottom: 0,
   },
   headerContainer: {
     flexDirection: 'row',
