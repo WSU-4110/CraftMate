@@ -7,6 +7,8 @@ import { db } from "../../constants/firebaseConfig";
 import { useColorScheme } from "react-native";
 import { Colors } from "../../constants/Colors";
 import { getAuth } from "firebase/auth";
+import { Ionicons } from "@expo/vector-icons";
+
 
 interface UserPost {
   id: string;
@@ -106,28 +108,22 @@ export default function ViewProfileScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors[theme].background }}>
-      <ScrollView contentContainerStyle={{ padding: 20, alignItems: "center" }}>
+      <ScrollView contentContainerStyle={{ padding: 20, alignItems: "center", marginTop: 60 }}>
         <Image
           source={{
             uri: profile.profileImage?.startsWith("data:image/")
               ? profile.profileImage
               : profile.profileImage || "https://via.placeholder.com/150",
           }}
-          style={{ width: 120, height: 120, borderRadius: 60, borderWidth: 2, borderColor: "#E89600", marginBottom: 10 }}
+          style={{ width: 150, height: 150, borderRadius: 75, borderWidth: 2, borderColor: "#E89600", marginBottom: 15 }}
         />
-        <Text style={{ fontWeight: "bold", fontSize: 18, color: Colors[theme].text }}>
+        <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 10, color: Colors[theme].text }}>
           {profile.firstName} {profile.lastName}
         </Text>
         <Text style={{ color: Colors[theme].text, marginBottom: 10 }}>
           {profile.bio || "No bio available."}
         </Text>
-
-        {isOwnProfile && (
-          <TouchableOpacity onPress={() => {}}>
-            <Text style={{ color: Colors[theme].tint, marginBottom: 10 }}>Edit Profile Image</Text>
-          </TouchableOpacity>
-        )}
-
+  
         {isOwnProfile && (
           <TouchableOpacity
             style={{
@@ -142,7 +138,7 @@ export default function ViewProfileScreen() {
             <Text style={{ color: "#fff", fontWeight: "bold" }}>Edit Profile</Text>
           </TouchableOpacity>
         )}
-
+  
         {!isOwnProfile && (
           <TouchableOpacity
             style={{
@@ -159,7 +155,7 @@ export default function ViewProfileScreen() {
             </Text>
           </TouchableOpacity>
         )}
-
+  
         <View style={{ flexDirection: "row", justifyContent: "space-around", width: "100%", marginBottom: 10 }}>
           <View style={{ alignItems: "center", flex: 1 }}>
             <Text style={{ color: Colors[theme].text, fontWeight: "bold" }}>
@@ -180,7 +176,7 @@ export default function ViewProfileScreen() {
             <Text style={{ color: Colors[theme].text }}>Following</Text>
           </View>
         </View>
-
+  
         {profile.tags?.length > 0 && (
           <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", marginVertical: 10 }}>
             {profile.tags.map((tag: string) => (
@@ -199,26 +195,50 @@ export default function ViewProfileScreen() {
             ))}
           </View>
         )}
-
-        <View style={{ width: "100%" }}>
-          <Text style={{ fontSize: 16, fontWeight: "bold", color: Colors[theme].text, marginVertical: 10 }}>Posts</Text>
-          {userPosts.map((item) => {
-            const postDate = item.timestamp?.toDate?.() || new Date(item.timestamp);
-            return (
-              <View key={item.id} style={{ marginBottom: 20 }}>
-                <Text style={{ color: Colors[theme].text, fontWeight: "bold" }}>{item.postTitle}</Text>
-                <Text style={{ color: Colors[theme].text }}>{postDate.toLocaleDateString()}</Text>
-                {item.images?.[0] && (
-                  <Image
-                    source={{ uri: item.images[0] }}
-                    style={{ width: "100%", height: 200, borderRadius: 10, marginTop: 5 }}
-                  />
-                )}
-              </View>
-            );
-          })}
+  
+        <View style={{ width: "100%", alignItems: "center" }}>
+          <Text style={{ fontSize: 16, fontWeight: "bold", color: Colors[theme].text, marginVertical: 10 }}>
+            Posts
+          </Text>
+  
+          {userPosts.length === 0 ? (
+            <View style={{ alignItems: "center", marginTop: 20 }}>
+              <Ionicons name="image-outline" size={60} color={Colors[theme].text} />
+              <Text style={{ marginTop: 10, fontSize: 16, color: Colors[theme].text }}>No posts yet</Text>
+            </View>
+          ) : (
+            userPosts.map((item) => {
+              const postDate = item.timestamp?.toDate?.() || new Date(item.timestamp);
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  onPress={() => router.push(`/pages/viewpost?postId=${item.id}`)}
+                  style={{
+                    marginBottom: 20,
+                    backgroundColor: Colors[theme].card || "#222222",
+                    padding: 10,
+                    borderRadius: 10,
+                    width: "100%",
+                  }}
+                >
+                  <Text style={{ color: Colors[theme].text, fontWeight: "bold", marginBottom: 5 }}>
+                    {item.postTitle}
+                  </Text>
+                  <Text style={{ color: Colors[theme].text, marginBottom: 5 }}>
+                    {postDate.toLocaleDateString()}
+                  </Text>
+                  {item.images?.[0] && (
+                    <Image
+                      source={{ uri: item.images[0] }}
+                      style={{ width: "100%", height: 200, borderRadius: 10 }}
+                    />
+                  )}
+                </TouchableOpacity>
+              );
+            })
+          )}
         </View>
       </ScrollView>
     </View>
   );
-}
+}  

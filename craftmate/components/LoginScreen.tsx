@@ -383,179 +383,179 @@ export default function LoginScreen() {
       ? item.timestamp
       : item.timestamp?.toDate?.() || new Date(item.timestamp);
 
-    return (
-      <View style={[{
-        width: '100%',
-        marginVertical: 10,
-        backgroundColor: Colors[theme].background,
-        borderColor: Colors[theme].text,
-      }]}>
-        <TouchableOpacity
-          onPress={() => navigateToPost(item.id)}
-          onLongPress={() => handleDeletePost(item.id)}
-        >
-          <View style={{ 
-            flexDirection: 'row', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            marginBottom: 8 
-          }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Image
-                source={
-                  item.profileImage
-                    ? { uri: item.profileImage }
-                    : require('../assets/images/PortraitPlaceholder.png')
-                }
-                style={{ width: 26, height: 26, borderRadius: 13, marginRight: 8 }}
-              />
-              <Text style={{ fontSize: 14, fontWeight: 'bold', color: Colors[theme].text }}>
-                {item.username}
-              </Text>
-            </View>
-            <Text style={{ fontSize: 12, color: '#888' }}>
-              {postDate.toLocaleDateString()}
-            </Text>
-          </View>
-          <Text style={{ fontSize: 16, marginBottom: 10, color: Colors[theme].text, fontWeight: 'bold' }}>
-            {item.postTitle}
-          </Text>
-          {item.images && item.images.length > 0 && (
-            <Image source={{ uri: item.images[0] }} style={{ width: '100%', height: 200, borderRadius: 10, marginBottom: 4 }} />
-          )}
-        </TouchableOpacity>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8 }}>
-          <View style={{ flexDirection: 'row' }}>
-            {/* Like Button */}
-            <TouchableOpacity
-              style={{ 
-                marginLeft: 0, 
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                borderRadius: 20,
-                backgroundColor: item.likedBy?.includes(user?.uid)
-                  ? '#E89600' 
-                  : Colors[theme].tint, 
-              }}
-              onPress={() => handleLikePost(item.id)}
-            >
-              <Ionicons
-                name={item.likedBy?.includes(user?.uid) ? 'thumbs-up' : 'thumbs-up-outline'}
-                size={16}
-                color={item.likedBy?.includes(user?.uid) ? Colors[theme].background : Colors[theme].text}
-              />
-              <Text style={{
-                marginLeft: 5,
-                fontSize: 14,
-                fontWeight: 'bold',
-                color: item.likedBy?.includes(user?.uid) ? Colors[theme].background : Colors[theme].text
-              }}>
-                {item.likes}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Comment Button */}
-            <TouchableOpacity
-              style={{
-                marginLeft: 10,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                borderRadius: 20,
-                backgroundColor: Colors[theme].tint
-              }}
-              onPress={() => navigateToPost(item.id)}
-            >
-              <Ionicons name="chatbubble-outline" size={16} color={Colors[theme].text} />
-              <Text style={{ marginLeft: 5, fontSize: 14, fontWeight: 'bold', color: Colors[theme].text }}>
-                {item.comments || 0}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    );
-  };
-
-  // Render UI when user is logged in
-  if (user) {
-    return (
-      <View style={{ flex: 1, backgroundColor: Colors[theme].background }}>
-        {/* Profile Header */}
-        <View style={styles.headerContainer}>
-          <Text style={[styles.headerText, { color: Colors[theme].text }]}>
-            {profile.username || "Profile"} {/* Display username in the header */}
-          </Text>
+      return (
+        <View style={[{
+          width: '100%',
+          marginVertical: 10,
+          backgroundColor: Colors[theme].background,
+          borderColor: Colors[theme].text,
+        }]}>
           <TouchableOpacity
-            style={{
-              position: "absolute",
-              top: 10,
-              right: 10,
-              padding: 10,
-              backgroundColor: Colors[theme].inputBackground,
-              borderRadius: 5,
-            }}
-            onPress={handleSignOut}
+            onPress={() => navigateToPost(item.id)}
+            onLongPress={() => handleDeletePost(item.id)}
           >
-            <Text style={{ color: Colors[theme].text }}>Sign Out</Text>
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView
-          contentContainerStyle={[
-            styles.container,
-            { alignItems: "center" } // Center content horizontally
-          ]}
-        >
-          <TouchableOpacity onPress={handlePickImage}>
-            <Image
-              source={{
-                uri: profile.profileImage.startsWith('data:image/')
-                  ? profile.profileImage // Base64 string
-                  : profile.profileImage || "https://via.placeholder.com/150", // URI or placeholder
-              }}
-              style={{
-                width: 120, // Adjusted size
-                height: 120, // Adjusted size
-                borderRadius: 60, // Circular shape
-                alignSelf: "center",
-                marginBottom: 10,
-                borderWidth: 2,
-                borderColor: "#E89600",
-              }}
-            />
-          </TouchableOpacity>
-
-            <Text style={[styles.text, { color: Colors[theme].text, textAlign: "center", fontWeight: "bold", fontSize: 18 }]}>
-            {profile.name}
-            </Text>
-          
-          {/* Display tags directly under bio/name */}
-          {profile.tags.length > 0 && (
-            <View style={{ marginVertical: 10, width: '100%', alignItems: 'center' }}>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, justifyContent: 'center' }}>
-                {profile.tags.map((tag) => (
-                  <View
-                    key={tag}
-                    style={{
-                      backgroundColor: "#E89600",
-                      paddingVertical: 8,
-                      paddingHorizontal: 14,
-                      borderRadius: 20,
-                      marginVertical: 4,
-                    }}
-                  >
-                    <Text style={{ color: Colors[theme].background }}>{tag}</Text>
-                  </View>
-                ))}
+            <View style={{ 
+              flexDirection: 'row', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              marginBottom: 8 
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Image
+                  source={
+                    item.profileImage
+                      ? { uri: item.profileImage }
+                      : require('../assets/images/PortraitPlaceholder.png')
+                  }
+                  style={{ width: 26, height: 26, borderRadius: 13, marginRight: 8 }}
+                />
+                <Text style={{ fontSize: 14, fontWeight: 'bold', color: Colors[theme].text }}>
+                  {item.username}
+                </Text>
               </View>
+              <Text style={{ fontSize: 12, color: '#888' }}>
+                {postDate.toLocaleDateString()}
+              </Text>
             </View>
-          )}
+            <Text style={{ fontSize: 16, marginBottom: 10, color: Colors[theme].text, fontWeight: 'bold' }}>
+              {item.postTitle}
+            </Text>
+            {item.images && item.images.length > 0 && (
+              <Image source={{ uri: item.images[0] }} style={{ width: '100%', height: 200, borderRadius: 10, marginBottom: 4 }} />
+            )}
+          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8 }}>
+            <View style={{ flexDirection: 'row' }}>
+              {/* Like Button */}
+              <TouchableOpacity
+                style={{ 
+                  marginLeft: 0, 
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 20,
+                  backgroundColor: item.likedBy?.includes(user?.uid)
+                    ? '#E89600' 
+                    : Colors[theme].tint, 
+                }}
+                onPress={() => handleLikePost(item.id)}
+              >
+                <Ionicons
+                  name={item.likedBy?.includes(user?.uid) ? 'thumbs-up' : 'thumbs-up-outline'}
+                  size={16}
+                  color={item.likedBy?.includes(user?.uid) ? Colors[theme].background : Colors[theme].text}
+                />
+                <Text style={{
+                  marginLeft: 5,
+                  fontSize: 14,
+                  fontWeight: 'bold',
+                  color: item.likedBy?.includes(user?.uid) ? Colors[theme].background : Colors[theme].text
+                }}>
+                  {item.likes}
+                </Text>
+              </TouchableOpacity>
+  
+              {/* Comment Button */}
+              <TouchableOpacity
+                style={{
+                  marginLeft: 10,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 20,
+                  backgroundColor: Colors[theme].tint
+                }}
+                onPress={() => navigateToPost(item.id)}
+              >
+                <Ionicons name="chatbubble-outline" size={16} color={Colors[theme].text} />
+                <Text style={{ marginLeft: 5, fontSize: 14, fontWeight: 'bold', color: Colors[theme].text }}>
+                  {item.comments || 0}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      );
+    };
+  
+    // Render UI when user is logged in
+    if (user) {
+      return (
+        <View style={{ flex: 1, backgroundColor: Colors[theme].background }}>
+          {/* Profile Header */}
+          <View style={styles.headerContainer}>
+            <Text style={[styles.headerText, { color: Colors[theme].text }]}>
+              {profile.username || "Profile"} {/* Display username in the header */}
+            </Text>
+            <TouchableOpacity
+              style={{
+                position: "absolute",
+                top: 10,
+                right: 10,
+                padding: 10,
+                backgroundColor: Colors[theme].inputBackground,
+                borderRadius: 5,
+              }}
+              onPress={handleSignOut}
+            >
+              <Text style={{ color: Colors[theme].text }}>Sign Out</Text>
+            </TouchableOpacity>
+          </View>
+  
+          <ScrollView
+            contentContainerStyle={[
+              styles.container,
+              { alignItems: "center" } // Center content horizontally
+            ]}
+          >
+            <TouchableOpacity onPress={handlePickImage}>
+              <Image
+                source={{
+                  uri: profile.profileImage.startsWith('data:image/')
+                    ? profile.profileImage // Base64 string
+                    : profile.profileImage || "https://via.placeholder.com/150", // URI or placeholder
+                }}
+                style={{
+                  width: 120, // Adjusted size
+                  height: 120, // Adjusted size
+                  borderRadius: 60, // Circular shape
+                  alignSelf: "center",
+                  marginBottom: 10,
+                  borderWidth: 2,
+                  borderColor: "#E89600",
+                }}
+              />
+            </TouchableOpacity>
+  
+              <Text style={[styles.text, { color: Colors[theme].text, textAlign: "center", fontWeight: "bold", fontSize: 18 }]}>
+              {profile.name}
+              </Text>
+            
+            {/* Display tags directly under bio/name */}
+            {profile.tags.length > 0 && (
+              <View style={{ marginVertical: 10, width: '100%', alignItems: 'center' }}>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, justifyContent: 'center' }}>
+                  {profile.tags.map((tag) => (
+                    <View
+                      key={tag}
+                      style={{
+                        backgroundColor: "#E89600",
+                        paddingVertical: 8,
+                        paddingHorizontal: 14,
+                        borderRadius: 20,
+                        marginVertical: 4,
+                      }}
+                    >
+                      <Text style={{ color: Colors[theme].background }}>{tag}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
           
           {/* Stats Row (Posts, Followers, Following) */}
           <View style={{ 
