@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderWidth: 1,
     padding: 10,
-  }
+  },
   characterCountContainer: {
     flexDirection: 'row',
     justifyContent: 'flex-end',

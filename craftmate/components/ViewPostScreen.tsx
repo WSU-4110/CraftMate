@@ -53,8 +53,6 @@ const formatReplyDate = (timestamp: Date): string => {
   return `${month}/${day}/${year}`;
 };
 
-
-
 export default function ViewPostScreen() {
   const theme: "light" | "dark" = useColorScheme() || "light";
   const navigation = useNavigation();
@@ -69,7 +67,6 @@ export default function ViewPostScreen() {
   const [replies, setReplies] = useState<Reply[]>([]);
 
   const router = useRouter(); // Add router from expo-router
-  const { postId } = route.params as { postId: string };
 
   const [post, setPost] = useState<Post | null>(null);
   const [isLoading, setIsLoading] = useState(true);
