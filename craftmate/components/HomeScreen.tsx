@@ -200,7 +200,22 @@ const HomeScreen = () => {
   };
 
   const navigateToUserProfile = (userId: string) => {
-    router.push(`../pages/ViewProfileScreen?userId=${userId}`);
+    const currentUser = auth.currentUser;
+    
+    // Check if user is logged in
+    if (!currentUser) {
+      // If not logged in, redirect to login screen
+      router.push('/login');
+      return;
+    }
+    
+    // If it's the current user, go to their profile
+    if (userId === currentUser.uid) {
+      router.push('/login');
+    } else {
+      // If it's another user, go to view their profile
+      router.push(`../pages/ViewProfileScreen?userId=${userId}`);
+    }
   };
 
   const filteredPosts = searchQuery
