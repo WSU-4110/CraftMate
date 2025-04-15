@@ -335,75 +335,73 @@ await addDoc(repliesRef, {
 
       </View>
       
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        {post.tags && post.tags.length > 0 && (
-          <View style={styles.tagsContainer}>
-            {post.tags.map((tag, index) => (
-              <View key={index} style={styles.tag}>
-                <Text style={[styles.tagText, { color: Colors[theme].background }]}>
-                  {tag}
-                </Text>
-              </View>
-            ))}
-          </View>
-        )}
-
-        <Text style={[styles.postTitle, { color: Colors[theme].text }]}>
-          {post.postTitle}
-        </Text>
-
-        {post.images && post.images.length > 0 && (
-          <View style={styles.imageSliderContainer}>
-            <FlatList
-              data={post.images}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={(item, index) => index.toString()}
-              onScroll={(event) => {
-                const index = Math.round(
-                  event.nativeEvent.contentOffset.x /
-                    (Dimensions.get("window").width - 40)
-                );
-                setActiveIndex(index);
-              }}
-              renderItem={({ item, index }) => (
-                <Image
-                  source={getImageSource(item)}
-                  style={[
-                    styles.sliderImage,
-                    {
-                      borderRadius: index === 0 || index === post.images!.length - 1 ? 10 : 0,
-                    },
-                  ]}
-                />
-              )}
-            />
-          </View>
-        )}
-
-        <View
-          style={[
-            styles.postContainer,
-            {
-              backgroundColor: Colors[theme].background,
-              borderColor: Colors[theme].text,
-            },
-          ]}
-        >
-          <Text
-            style={[
-              styles.postBody,
-              { color: Colors[theme].postText },
-            ]}
-          >
-            {post.postBody}
-          </Text>
-          
-          {/* Replies List */}
-          <FlatList
+      <FlatList
   data={replies}
   keyExtractor={(item) => item.id}
+  contentContainerStyle={styles.scrollViewContent}
+  ListHeaderComponent={
+    <>
+      {post.tags && post.tags.length > 0 && (
+        <View style={styles.tagsContainer}>
+          {post.tags.map((tag, index) => (
+            <View key={index} style={styles.tag}>
+              <Text style={[styles.tagText, { color: Colors[theme].background }]}>
+                {tag}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      <Text style={[styles.postTitle, { color: Colors[theme].text }]}>
+        {post.postTitle}
+      </Text>
+
+      {post.images && post.images.length > 0 && (
+        <View style={styles.imageSliderContainer}>
+          <FlatList
+            data={post.images}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item, index) => index.toString()}
+            onScroll={(event) => {
+              const index = Math.round(
+                event.nativeEvent.contentOffset.x /
+                  (Dimensions.get("window").width - 40)
+              );
+              setActiveIndex(index);
+            }}
+            renderItem={({ item, index }) => (
+              <Image
+                source={getImageSource(item)}
+                style={[
+                  styles.sliderImage,
+                  {
+                    borderRadius: index === 0 || index === post.images!.length - 1 ? 10 : 0,
+                  },
+                ]}
+              />
+            )}
+          />
+        </View>
+      )}
+
+      <View
+        style={[
+          styles.postContainer,
+          {
+            backgroundColor: Colors[theme].background,
+            borderColor: Colors[theme].text,
+          },
+        ]}
+      >
+        <Text style={[styles.postBody, { color: Colors[theme].postText }]}>
+          {post.postBody}
+        </Text>
+      </View>
+    </>
+  }
   renderItem={({ item }) => (
     <View style={{
       backgroundColor: '#1e1e1e',
@@ -414,24 +412,16 @@ await addDoc(repliesRef, {
       borderColor: '#ccc',
       borderWidth: 1,
     }}>
-          <Text style={{ color: 'gray', fontSize: 12 }}>{item.authorName}</Text>
-
-          <Text style={{ color: 'gray', fontSize: 12 }}>
-            {formatReplyDate(item.timestamp)}
-          </Text>
-
-
-
+      <Text style={{ color: 'gray', fontSize: 12 }}>{item.authorName}</Text>
+      <Text style={{ color: 'gray', fontSize: 12 }}>{formatReplyDate(item.timestamp)}</Text>
       <Text style={{ color: Colors[theme].text, fontSize: 14, marginVertical: 4 }}>{item.content}</Text>
 
       {item.authorId === currentUser?.uid && (
         <TouchableOpacity
           onPress={async () => {
             const replyRef = doc(db, "posts", safePostId, "replies", item.id);
-
             await deleteDoc(replyRef);
             await updateDoc(doc(db, "posts", safePostId as string), { comments: increment(-1) });
-
           }}
           style={{
             flexDirection: 'row',
@@ -450,71 +440,70 @@ await addDoc(repliesRef, {
       )}
     </View>
   )}
+  ListFooterComponent={
+    <View style={styles.postFooter}>
+      <View style={styles.postActions}>
+        <TouchableOpacity
+          style={[
+            styles.actionButton,
+            styles.ovalContainer,
+            {
+              backgroundColor: post?.likedBy?.includes(currentUser!.uid)
+                ? "#E89600"
+                : Colors[theme].tint,
+            },
+          ]}
+          onPress={handleLikePost}
+        >
+          <Ionicons
+            name={
+              post?.likedBy?.includes(currentUser!.uid)
+                ? "thumbs-up"
+                : "thumbs-up-outline"
+            }
+            size={16}
+            color={
+              post?.likedBy?.includes(currentUser!.uid)
+                ? Colors[theme].background
+                : Colors[theme].text
+            }
+          />
+          <Text
+            style={[
+              styles.ovalText,
+              {
+                color: post?.likedBy?.includes(currentUser!.uid)
+                  ? Colors[theme].background
+                  : Colors[theme].text,
+              },
+            ]}
+          >
+            {post.likes}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.actionButton,
+            styles.ovalContainer,
+            { backgroundColor: Colors[theme].tint },
+          ]}
+          onPress={handleCommentPress}
+        >
+          <Ionicons
+            name="chatbubble-outline"
+            size={16}
+            color={Colors[theme].text}
+          />
+          <Text style={[styles.ovalText, { color: Colors[theme].text }]}>
+            {post.comments || 0}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  }
 />
 
-
-          <View style={styles.postFooter}>
-            <View style={styles.postActions}>
-              <TouchableOpacity
-                style={[
-                  styles.actionButton,
-                  styles.ovalContainer,
-                  {
-                    backgroundColor: post?.likedBy?.includes(currentUser!.uid)
-                      ? "#E89600"
-                      : Colors[theme].tint,
-                  },
-                ]}
-                onPress={handleLikePost}
-              >
-                <Ionicons
-                  name={
-                    post?.likedBy?.includes(currentUser!.uid)
-                      ? "thumbs-up"
-                      : "thumbs-up-outline"
-                  }
-                  size={16}
-                  color={
-                    post?.likedBy?.includes(currentUser!.uid)
-                      ? Colors[theme].background
-                      : Colors[theme].text
-                  }
-                />
-                <Text
-                  style={[
-                    styles.ovalText,
-                    {
-                      color: post?.likedBy?.includes(currentUser!.uid)
-                        ? Colors[theme].background
-                        : Colors[theme].text,
-                    },
-                  ]}
-                >
-                  {post.likes}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.actionButton,
-                  styles.ovalContainer,
-                  { backgroundColor: Colors[theme].tint },
-                ]}
-                onPress={handleCommentPress}
-              >
-                <Ionicons
-                  name="chatbubble-outline"
-                  size={16}
-                  color={Colors[theme].text}
-                />
-                <Text style={[styles.ovalText, { color: Colors[theme].text }]}>
-                  {post.comments || 0}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </ScrollView>
       
       {/* Modal for replying to a comment */}
       {isReplying && (
