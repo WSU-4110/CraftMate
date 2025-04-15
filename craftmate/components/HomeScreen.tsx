@@ -287,6 +287,7 @@ const HomeScreen = () => {
                   backgroundColor: item.likedBy?.includes(user?.uid)
                     ? '#E89600' // Highlighted color for liked state
                     : Colors[theme].tint, // Default color
+                  marginLeft: 0,
                 },
               ]}
               onPress={() => handleLikePost(item.id)}
