@@ -240,6 +240,15 @@ export default function LoginScreen() {
     }
   };
 
+  const navigateToFollowersList = () => {
+    router.push("/pages/followerFollowing?userId=" + user?.uid + "&type=followers");
+  };
+  
+  const navigateToFollowingList = () => {
+    router.push("/pages/followerFollowing?userId=" + user?.uid + "&type=following");
+  };
+  
+
   const handleBioSubmit = async () => {
     await updateProfile({ bio: bioText });
     setEditingBio(false);
@@ -383,6 +392,8 @@ export default function LoginScreen() {
       ? item.timestamp
       : item.timestamp?.toDate?.() || new Date(item.timestamp);
 
+
+      
       return (
         <View style={[{
           width: '100%',
@@ -583,19 +594,21 @@ export default function LoginScreen() {
               borderRightWidth: 1,
               borderRightColor: Colors[theme].border || '#E0E0E0'
             }}>
-              <Text style={[styles.text, { color: Colors[theme].text, fontWeight: 'bold' }]}>
-                {profile.followers?.length || 0}
-              </Text>
-              <Text style={{ color: Colors[theme].text }}>Followers</Text>
+         <TouchableOpacity style={{ alignItems: "center", flex: 1 }} onPress={navigateToFollowersList}>
+  <Text style={{ color: Colors[theme].text, fontWeight: "bold" }}>
+    {profile.followers?.length || 0}
+  </Text>
+  <Text style={{ color: Colors[theme].text }}>Followers</Text>
+</TouchableOpacity>
             </View>
             
             {/* Following Count */}
-            <View style={{ alignItems: 'center', flex: 1 }}>
-              <Text style={[styles.text, { color: Colors[theme].text, fontWeight: 'bold' }]}>
-                {profile.following?.length || 0}
-              </Text>
-              <Text style={{ color: Colors[theme].text }}>Following</Text>
-            </View>
+            <TouchableOpacity style={{ alignItems: "center", flex: 1 }} onPress={navigateToFollowingList}>
+            <Text style={{ color: Colors[theme].text, fontWeight: "bold" }}>
+    {profile.following?.length || 0}
+  </Text>
+  <Text style={{ color: Colors[theme].text }}>Following</Text>
+            </TouchableOpacity>
           </View>
           
           <View>

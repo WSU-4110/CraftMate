@@ -36,6 +36,7 @@ export default function RootLayout() {
         <Stack.Screen name="pages/writepost" options={{ headerShown: false }} />
         <Stack.Screen name="pages/editprofile" options={{ headerShown: false }} />
         <Stack.Screen name="pages/ViewProfileScreen" options={{headerShown:false}} />
+        <Stack.Screen name="pages/followerFollowing" options={{headerShown:false}} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />
