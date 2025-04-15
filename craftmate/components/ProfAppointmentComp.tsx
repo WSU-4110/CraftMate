@@ -19,7 +19,7 @@ import Animated, {
   withTiming,
   runOnJS,
 } from "react-native-reanimated";
-
+import { Colors } from "@/constants/Colors";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const SWIPE_THRESHOLD = 100;
 
@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#F9F9F9",
+    // backgroundColor will be set dynamically from the Colors constant.
   },
   header: {
     fontSize: 24,
@@ -82,11 +82,13 @@ const styles = StyleSheet.create({
   },
 });
 
-export default function ProfAppointmentComp() {
+interface ProfAppointmentCompProps {
+  theme: "light" | "dark";
+}
+
+export default function ProfAppointmentComp({ theme }: ProfAppointmentCompProps) {
   const [appointments, setAppointments] = useState(dummyAppointments);
-  const [acceptedAppointments, setAcceptedAppointments] = useState<
-    typeof dummyAppointments
-  >([]);
+  const [acceptedAppointments, setAcceptedAppointments] = useState<typeof dummyAppointments>([]);
   const [lastRemoved, setLastRemoved] = useState<{
     item: typeof dummyAppointments[0];
     type: "accept" | "reject";
@@ -119,15 +121,10 @@ export default function ProfAppointmentComp() {
 
   const handleUndo = () => {
     if (!lastRemoved) return;
-
     const { item, type } = lastRemoved;
-
     if (type === "accept") {
-      setAcceptedAppointments((prev) =>
-        prev.filter((appt) => appt.id !== item.id)
-      );
+      setAcceptedAppointments((prev) => prev.filter((appt) => appt.id !== item.id));
     }
-
     setAppointments((prev) => [item, ...prev]);
     setLastRemoved(null);
     setShowUndo(false);
@@ -163,12 +160,11 @@ export default function ProfAppointmentComp() {
       let opacity = Math.min(Math.abs(translateX.value) / SWIPE_THRESHOLD, 1);
       return {
         backgroundColor:
-              translateX.value > 0
-                ? `rgba(0, 200, 0, ${opacity * 0.5})`
-                : translateX.value < 0
-                ? `rgba(200, 0, 0, ${opacity * 0.5})`
-                : "transparent",
-
+          translateX.value > 0
+            ? `rgba(0, 200, 0, ${opacity * 0.5})`
+            : translateX.value < 0
+            ? `rgba(200, 0, 0, ${opacity * 0.5})`
+            : "transparent",
       };
     });
 
@@ -178,9 +174,7 @@ export default function ProfAppointmentComp() {
           <Animated.View
             style={[
               StyleSheet.absoluteFill,
-              {
-                borderRadius: 12,
-              },
+              { borderRadius: 12 },
               backgroundStyle,
             ]}
           />
@@ -203,15 +197,17 @@ export default function ProfAppointmentComp() {
       <Image source={{ uri: placeholderImage }} style={styles.avatar} />
       <View style={styles.infoContainer}>
         <Text style={styles.name}>{item.customerName}</Text>
-        <Text style={styles.details}>{item.date} at {item.time}</Text>
+        <Text style={styles.details}>
+          {item.date} at {item.time}
+        </Text>
       </View>
     </View>
   );
 
   return (
-    <GestureHandlerRootView style={styles.container}>
-      <Text style={styles.header}>Today's Appointments</Text>
-
+    <GestureHandlerRootView style={[styles.container, { backgroundColor: Colors[theme].background }]}>
+      {/* Update text color using Colors for the current theme */}
+      <Text style={[styles.header, { color: Colors[theme].text }]}>Today's Appointments</Text>
       <FlatList
         data={appointments}
         keyExtractor={(item) => item.id}
@@ -222,7 +218,7 @@ export default function ProfAppointmentComp() {
 
       {acceptedAppointments.length > 0 && (
         <>
-          <Text style={styles.subHeader}>Accepted Appointments</Text>
+          <Text style={[styles.subHeader, { color: Colors[theme].text }]}>Accepted Appointments</Text>
           <FlatList
             data={acceptedAppointments}
             keyExtractor={(item) => item.id}
