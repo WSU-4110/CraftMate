@@ -6,34 +6,12 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 0,
   },
-    buttonText: {
-        color: "white",
-        fontSize: 16,
-    },
-    profileSection: {
-        alignItems: "center",
-        marginBottom: 20,
-    },
-    profileImage: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        marginBottom: 10,
-    },
-    profileName: {
-        fontSize: 20,
-        fontWeight: "bold",
-    },
-    buttonContainer: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        width: "80%",
-    },
-    modalOverlay: {
-      flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor: "rgba(0, 0, 0, 0.5)",
+  title: {
+    fontSize: 32,
+    fontWeight: "bold",
+    marginBottom: 30,
+    textAlign: "center",
+    color: "#E89600", // Match CraftMate's orange
   },
   input: {
     height: 50,
