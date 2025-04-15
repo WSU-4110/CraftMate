@@ -248,7 +248,7 @@ export default function LoginScreen() {
           />
         </TouchableOpacity>
 
-        <Text style={[styles.text, { color: Colors[theme].text }]}>Name: {profile.name}</Text>
+        <Text style={[styles.text, { color: Colors[theme].text }]}>Name: {profile.firstName}</Text>
         <Text style={[styles.text, { color: Colors[theme].text }]}>Email: {user.email}</Text>
         <Text style={[styles.text, { color: Colors[theme].text }]}>Status: {profile.isActive ? 'Active' : 'Inactive'}</Text>
 
