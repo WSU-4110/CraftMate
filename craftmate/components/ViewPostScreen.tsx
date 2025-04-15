@@ -22,9 +22,12 @@ import { db } from "../constants/firebaseConfig";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { getAuth, User } from "firebase/auth";
 import RepliesComponent from "./RepliesComponent"
+import { useRouter } from "expo-router";
 import styles from "./ViewPostScreen.styles"; // Import styles
+
 interface Post {
   username: string;
+  userId: string; // Add userId to the interface
   postTitle: string;
   postBody: string;
   timestamp: string | Timestamp;
@@ -57,24 +60,26 @@ export default function ViewPostScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const { postId } = route.params as { postId: string | undefined };
-if (!postId) {
-  throw new Error("Post ID is missing in route params");
-}
-const safePostId = postId as string;
-
-
-
+  if (!postId) {
+    throw new Error("Post ID is missing in route params");
+  }
+  const safePostId = postId as string;
   const [isReplying, setIsReplying] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
 
-
-
+  const router = useRouter(); // Add router from expo-router
+  const { postId } = route.params as { postId: string };
 
   const [post, setPost] = useState<Post | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0); // Track the active image index
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  // Add function to navigate to user profile
+  const navigateToUserProfile = (userId: string) => {
+    router.push(`../pages/ViewProfileScreen?userId=${userId}`);
+  };
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -312,9 +317,11 @@ await addDoc(repliesRef, {
               source={getImageSource(post.profileImage)}
               style={styles.profileImage}
             />
-            <Text style={[styles.username, { color: Colors[theme].text }]}>
-              {post.username}
-            </Text>
+            <TouchableOpacity onPress={() => post?.userId && navigateToUserProfile(post.userId)}>
+              <Text style={[styles.username, { color: Colors[theme].text }]}>
+                {post.username}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
         

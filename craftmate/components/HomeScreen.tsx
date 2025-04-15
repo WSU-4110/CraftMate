@@ -24,6 +24,7 @@ import {
   increment,
   getDoc,
   deleteDoc,  // Import deleteDoc from Firestore
+  arrayRemove, // Add arrayRemove import
 } from 'firebase/firestore';
 import { onAuthStateChanged, User, getAuth } from 'firebase/auth';
 import { db, auth } from '../constants/firebaseConfig';
@@ -165,10 +166,20 @@ const HomeScreen = () => {
             text: "Delete",
             onPress: async () => {
               try {
-                await deleteDoc(postRef);  // Delete the post from Firestore
+                // Delete the post from Firestore
+                await deleteDoc(postRef);
+                
+                // Update the user's post count and posts array in Firestore
+                const userRef = doc(db, "users", user.uid);
+                await updateDoc(userRef, {
+                  postCount: increment(-1),
+                  posts: arrayRemove(postId)
+                });
+                
                 console.log("Post deleted successfully!");
               } catch (error) {
                 console.error("Error deleting post:", error);
+                Alert.alert("Error", "Failed to delete post. Please try again.");
               }
             },
           },
@@ -186,6 +197,25 @@ const HomeScreen = () => {
 
   const navigateToPost = (postId: string) => {
     router.push(`../pages/viewpost?postId=${postId}`);
+  };
+
+  const navigateToUserProfile = (userId: string) => {
+    const currentUser = auth.currentUser;
+    
+    // Check if user is logged in
+    if (!currentUser) {
+      // If not logged in, redirect to login screen
+      router.push('/login');
+      return;
+    }
+    
+    // If it's the current user, go to their profile
+    if (userId === currentUser.uid) {
+      router.push('/login');
+    } else {
+      // If it's another user, go to view their profile
+      router.push(`../pages/ViewProfileScreen?userId=${userId}`);
+    }
   };
 
   const filteredPosts = searchQuery
@@ -250,9 +280,11 @@ const HomeScreen = () => {
                 }
                 style={styles.profileImage}
               />
-              <Text style={[styles.postUsername, { color: Colors[theme].text }]}>
-                {item.username}
-              </Text>
+              <TouchableOpacity onPress={() => navigateToUserProfile(item.userId)}>
+                <Text style={[styles.postUsername, { color: Colors[theme].text }]}>
+                  {item.username}
+                </Text>
+              </TouchableOpacity>
             </View>
             <Text style={[styles.postTimestamp, { color: Colors[theme].text }]}>
               {postDate.toLocaleDateString()}
@@ -276,6 +308,7 @@ const HomeScreen = () => {
                   backgroundColor: item.likedBy?.includes(user?.uid)
                     ? '#E89600' // Highlighted color for liked state
                     : Colors[theme].tint, // Default color
+                  marginLeft: 0,
                 },
               ]}
               onPress={() => handleLikePost(item.id)}

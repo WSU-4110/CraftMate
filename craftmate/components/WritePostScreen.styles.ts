@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 20,
-    marginTop: 30,
+    marginTop: 36,
     position: "relative",
   },
   backButton: {
@@ -75,9 +75,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
-  },
-  topPadding: {
-    paddingTop: 8,
   },
   addTagsButton: {
     flexDirection: "row",
@@ -136,36 +133,49 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  // Add these styles in your StyleSheet.create() section
-centeredView: {
-  flex: 1,
-  justifyContent: 'center',
-  alignItems: 'center',
-  marginTop: 22,
-},
-modalView: {
-  margin: 20,
-  backgroundColor: 'white',
-  borderRadius: 20,
-  padding: 35,
-  alignItems: 'center',
-  shadowColor: '#000',
-  shadowOffset: {
-    width: 0,
-    height: 2,
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 22,
   },
-  shadowOpacity: 0.25,
-  shadowRadius: 4,
-  elevation: 5,
-},
-modalInput: {
-  width: '80%',
-  height: 40,
-  marginBottom: 20,
-  borderWidth: 1,
-  padding: 10,
-}
-
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalInput: {
+    width: '80%',
+    height: 40,
+    marginBottom: 20,
+    borderWidth: 1,
+    padding: 10,
+  }
+  characterCountContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginTop: -15,
+  },
+  characterCount: {
+    fontSize: 12,
+    textAlign: 'right',
+  },
+  characterWarning: {
+    fontSize: 12,
+    color: 'red',
+    marginLeft: 8,
+  },
 });
 
 export default styles;

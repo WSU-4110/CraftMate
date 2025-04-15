@@ -41,6 +41,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "left",
     marginVertical: 10,
+    marginTop: 1,
+    marginBottom: 10,
   },
   postContainer: {
     width: Dimensions.get("window").width - 40,
@@ -120,6 +122,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 4,
     marginRight: 8,
+    marginBottom: 8,
   },
   tagText: {
     fontSize: 14,

@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { AppState } from 'react-native';
 import Toast from 'react-native-toast-message'; // ✅ Import Toast
 
+
+import NetInfo from '@react-native-community/netinfo';
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
@@ -11,8 +13,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 
 import { auth, db } from '@/constants/firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, updateDoc } from 'firebase/firestore';
-
+import { doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -20,12 +21,18 @@ export default function TabLayout() {
   const [user, setUser] = useState(null);
   const [isActive, setIsActive] = useState(false);
 
-  // Function to update isActive status in Firestore
   const handleUserInactive = async (uid: string | null) => {
     if (!uid) return;
     try {
       const userRef = doc(db, "users", uid);
-      await updateDoc(userRef, { isActive: false });
+      const userSnap = await getDoc(userRef);
+      
+      if (userSnap.exists()) {
+        await updateDoc(userRef, { isActive: false });
+      } else {
+        // Create the document if it doesn't exist
+        await setDoc(userRef, { isActive: false });
+      }
       console.log(`User ${uid} marked as inactive`);
     } catch (error) {
       console.error("Error updating user status:", error);
@@ -36,7 +43,20 @@ export default function TabLayout() {
     if (!uid) return;
     try {
       const userRef = doc(db, "users", uid);
-      await updateDoc(userRef, { isActive: true });
+      const userSnap = await getDoc(userRef);
+      
+      if (userSnap.exists()) {
+        await updateDoc(userRef, { isActive: true });
+      } else {
+        // Create the document if it doesn't exist
+        await setDoc(userRef, { 
+          isActive: true,
+          createdAt: new Date(),
+          email: auth.currentUser?.email || '',
+          displayName: auth.currentUser?.displayName || '',
+          photoURL: auth.currentUser?.photoURL || ''
+        });
+      }
       console.log(`User ${uid} marked as active`);
     } catch (error) {
       console.error("Error updating user status:", error);
@@ -44,18 +64,16 @@ export default function TabLayout() {
   };
 
   useEffect(() => {
-    // Listen for authentication state changes
     const unsubscribeAuth = onAuthStateChanged(auth, async (authenticatedUser) => {
       setUser(authenticatedUser);
       if (authenticatedUser) {
         setIsActive(true);
-        await handleUserActive(authenticatedUser.uid); // Update Firestore when logged in
+        await handleUserActive(authenticatedUser.uid);
       } else {
-        await handleUserInactive(auth?.currentUser?.uid ?? ""); // Update Firestore on logout
+        await handleUserInactive(auth?.currentUser?.uid ?? "");
       }
     });
 
-    // Listen for AppState changes (detect background/inactive state)
     const appStateListener = AppState.addEventListener("change", async (nextAppState) => {
       if (nextAppState === "background" || nextAppState === "inactive") {
         await handleUserInactive(auth?.currentUser?.uid ?? "");
@@ -68,10 +86,28 @@ export default function TabLayout() {
     });
 
     return () => {
-      unsubscribeAuth(); // Unsubscribe Firebase listener
-      appStateListener.remove(); // Remove AppState listener
+      unsubscribeAuth();
+      appStateListener.remove();
     };
   }, []);
+
+  useEffect(() => {
+    const unsubscribeNetInfo = NetInfo.addEventListener((state) => {
+      // When network is lost, mark user inactive.
+      if (!state.isConnected) {
+        if (user?.uid) {
+          handleUserInactive(user.uid);
+        }
+      } else {
+        // When network is restored and app is active, mark user active.
+        if (AppState.currentState === "active" && user?.uid) {
+          handleUserActive(user.uid);
+        }
+      }
+    });
+    return () => unsubscribeNetInfo();
+  }, [user]);
+  
 
   return (
     <>
@@ -82,15 +118,11 @@ export default function TabLayout() {
           headerShown: false,
           tabBarButton: HapticTab,
           tabBarBackground: TabBarBackground,
-          tabBarShowLabel: false, // Hide the titles
-          tabBarItemStyle: { paddingVertical: 10 }, // Adjust the padding to lower the icons
-          tabBarStyle: { backgroundColor: '#E89600' }, // Fixed background color
+          tabBarShowLabel: false,
+          tabBarItemStyle: { paddingVertical: 10 },
+          tabBarStyle: { backgroundColor: '#E89600' },
         }}
       >
-        {/* Home Screen */}
-
-
-        {/* Chat List Screen (User List for Private Chats) */}
         <Tabs.Screen
           name="chat"
           options={{
@@ -103,33 +135,30 @@ export default function TabLayout() {
             tabBarIcon: ({ color }) => <IconSymbol size={32} name="house.fill" color={color} />,
           }}
         />
-        
-        {/* Login Screen */}
         <Tabs.Screen
           name="login"
           options={{
             tabBarIcon: ({ color }) => <IconSymbol size={32} name="person.crop.circle.fill" color={color} />,
           }}
         />
-        {/* Login Screen */}
         <Tabs.Screen
           name="video"
           options={{
-          tabBarIcon: ({ color }) => <IconSymbol size={32} name="video.fill" color={color} />,
-  }}
-/>
+            tabBarIcon: ({ color }) => <IconSymbol size={32} name="video.fill" color={color} />,
+          }}
+        />
 
-
-        {/* Stack Navigation for Private Messages */}
+        {/* Call Screen */}
         <Tabs.Screen
-          name="messages"
+          name="call"
           options={{
-            href: null, 
+            tabBarButton: () => null,
+            tabBarItemStyle: { display: 'none' },
           }}
         />
       </Tabs>
 
-      {/* ✅ Add Toast globally */}
+      {/* Toast component */}
       <Toast />
     </>
   );
