@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { AppState } from 'react-native';
 import Toast from 'react-native-toast-message'; // ✅ Import Toast
 
+
+import NetInfo from '@react-native-community/netinfo';
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
@@ -41,6 +43,11 @@ export default function TabLayout() {
     }
   };
 
+  
+  
+
+  
+  
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (authenticatedUser) => {
       setUser(authenticatedUser);
@@ -63,11 +70,31 @@ export default function TabLayout() {
       }
     });
 
+    
+
     return () => {
       unsubscribeAuth();
       appStateListener.remove();
     };
   }, []);
+
+  useEffect(() => {
+    const unsubscribeNetInfo = NetInfo.addEventListener((state) => {
+      // When network is lost, mark user inactive.
+      if (!state.isConnected) {
+        if (user?.uid) {
+          handleUserInactive(user.uid);
+        }
+      } else {
+        // When network is restored and app is active, mark user active.
+        if (AppState.currentState === "active" && user?.uid) {
+          handleUserActive(user.uid);
+        }
+      }
+    });
+    return () => unsubscribeNetInfo();
+  }, [user]);
+  
 
   return (
     <>
@@ -104,15 +131,28 @@ export default function TabLayout() {
         <Tabs.Screen
           name="video"
           options={{
-            tabBarIcon: ({ color }) => <IconSymbol size={32} name="video.fill" color={color} />,
-          }}
-        />
+          tabBarIcon: ({ color }) => <IconSymbol size={32} name="calendar" color={color} />,
+          }}/>
+
+
+
+
+
+
+
+
+
+
+        {/* Call Screen */}
         <Tabs.Screen
-          name="profappointment"
-          options={{
-            tabBarIcon: ({ color }) => <IconSymbol size={32} name="video.fill" color={color} />,
-          }}
-        />
+        name="call"
+        options={{
+        tabBarIcon: ({ color }) => <IconSymbol size={32} name="phone.fill" color={color} />,
+        }}
+/>
+
+
+        {/* Stack Navigation for Private Messages */}
         <Tabs.Screen
           name="messages"
           options={{
