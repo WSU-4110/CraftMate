@@ -25,8 +25,10 @@ import {
   getDoc, // added for Firestore user fetch
   getDocs
 } from "firebase/firestore";
+import { Alert } from "react-native";
 import { Colors } from "../../constants/Colors";
 import ProfAppointmentComp from "@/components/ProfAppointmentComp";
+import EnthusAppointmentComp from "@/components/EnthusAppointmentComp";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "expo-router";
@@ -56,6 +58,7 @@ export default function VideoScreen() {
   const [activeTab, setActiveTab] = useState<"book" | "my">("book");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [customTags, setCustomTags] = useState<string[]>([]);
+  const [myAppointments, setMyAppointments] = useState<any[]>([]);
 
   const theme = useColorScheme() || "light";
   const router = useRouter();
@@ -189,17 +192,20 @@ export default function VideoScreen() {
     try {
       await addDoc(collection(db, "appointments"), {
         enthusiastId: auth.currentUser.uid,
-        enthusiastName: currentUser?.firstName || "Unknown",
+        enthusiastfirstName: currentUser?.firstName,
+        enthusiastlastName: currentUser?.lastName,
         professionalId: selectedProfessional.id,
-        professionalName: selectedProfessional.firstName || "Professional",
+        professionalfirstName: selectedProfessional.firstName,
+        professionallastName: selectedProfessional.lastName,
         // Save as one combined field.
         scheduledDateTime: Timestamp.fromDate(appointmentDateTime),
         status: "pending",
         createdAt: Timestamp.now(),
       });
   
-      alert(
-        `Booking requested with ${selectedProfessional.firstName} on ${appointmentDateTime.toLocaleDateString()} at ${appointmentDateTime.toLocaleTimeString([], {
+      Alert.alert(
+        "Success!",
+        `Booking requested with ${selectedProfessional.firstName} ${selectedProfessional.lastName} on ${appointmentDateTime.toLocaleDateString()} at ${appointmentDateTime.toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
           hour12: true,
@@ -208,7 +214,7 @@ export default function VideoScreen() {
       setDateTimeSet(false);
     } catch (error) {
       console.error("Error sending booking request:", error);
-      alert("Something went wrong while sending the request.");
+      Alert.alert("Error", "Something went wrong while sending the request.");
     }
   };
   const sortedCategories = categories.slice().sort((a, b) => {
@@ -461,8 +467,9 @@ export default function VideoScreen() {
           {selectedTags.length > 0 && (
             <TouchableOpacity
               onPress={() => setSelectedTags([])}
+              
               style={{
-                backgroundColor: "#E89600",
+                backgroundColor: "#D32F2F",
                 padding: 10,
                 borderRadius: 20,
                 marginVertical: 15,
@@ -496,8 +503,9 @@ export default function VideoScreen() {
         onPress={() => {
           setSelectedProfessional(item);
           const now = new Date();
-          // Start with rounding up the current time to the next half-hour.
           let defaultAppointment = new Date(now);
+          
+          // Round up current time to the next half-hour.
           const minutes = now.getMinutes();
           const remainder = minutes % 30;
           if (remainder !== 0) {
@@ -505,12 +513,12 @@ export default function VideoScreen() {
           }
           defaultAppointment.setSeconds(0, 0);
           
-          // Ensure the default appointment is in the future.
+          // Ensure the appointment is in the future.
           if (defaultAppointment <= now) {
             defaultAppointment = new Date(defaultAppointment.getTime() + 30 * 60 * 1000);
           }
-        
-          // Now, query the appointments for this professional.
+          
+          // Query for the professional's booked appointment times.
           const q = query(
             collection(db, "appointments"),
             where("professionalId", "==", item.id),
@@ -518,39 +526,17 @@ export default function VideoScreen() {
           );
           getDocs(q)
             .then(snapshot => {
-              const existingSlots = snapshot.docs.map(doc => {
-                const data = doc.data();
-                const dt = data.scheduledDateTime?.toDate();
-                return dt
-                  ? {
-                      date: dt.toLocaleDateString(),
-                      time: dt.toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: true,
-                      }),
-                    }
-                  : null;
-              }).filter(Boolean);
+              // Build an array of booked appointment timestamps (milliseconds)
+              const existingTimes: number[] = snapshot.docs
+                .map(doc => doc.data().scheduledDateTime?.toDate()?.getTime())
+                .filter((t) => t !== null) as number[];
               
-              // Loop: while the defaultAppointment's slot is already booked,
+              // Loop: while the default appointment time is already booked,
               // add 30 minutes.
-              while (
-                existingSlots.some(slot => {
-                  const apptDateStr = defaultAppointment.toLocaleDateString();
-                  const apptTimeStr = defaultAppointment.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: true,
-                  });
-                  return slot.date === apptDateStr && slot.time === apptTimeStr;
-                })
-              ) {
+              while (existingTimes.includes(defaultAppointment.getTime())) {
                 defaultAppointment = new Date(defaultAppointment.getTime() + 30 * 60 * 1000);
-                // If we reach 12:00 AM (i.e. midnight), then we accept that as a valid slot.
-                // (No special rollover adjustment is needed since we want any time.)
               }
-              // Set the default appointment time in both date and time pickers.
+              // Set the default appointment time.
               setSelectedDate(new Date(defaultAppointment));
               setSelectedTime(new Date(defaultAppointment));
             })
@@ -567,6 +553,8 @@ export default function VideoScreen() {
         />
         <Text style={{ fontSize: 16, fontWeight: "bold", marginTop: 5, color: "black" }}>
           {item.firstName}
+          {"\n"}
+          {item.lastName}
         </Text>
         <Text style={{ fontSize: 14, color: item.isActive ? "green" : "gray" }}>
           {item.isActive ? "Online" : "Offline"}
@@ -655,13 +643,10 @@ export default function VideoScreen() {
 
       {/* My Appointments Tab */}
 {activeTab === "my" && (
-  <View style={{ padding: 20 }}>
-    <Text style={{ color: Colors[theme].text, fontSize: 16 }}>
-      My Appointments View Coming Soon...
-    </Text>
-  </View>
+  
+  <EnthusAppointmentComp theme = {theme}/>
 )}
-{/* Don't put a closing fragment here! */}
+
 </ScrollView>
   );
 }

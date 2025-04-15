@@ -147,7 +147,8 @@ export default function TabLayout() {
         <Tabs.Screen
         name="call"
         options={{
-        tabBarIcon: ({ color }) => <IconSymbol size={32} name="phone.fill" color={color} />,
+          tabBarButton: () => null,
+          tabBarItemStyle: { display: 'none' },
         }}
 />
 
