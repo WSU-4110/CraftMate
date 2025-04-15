@@ -272,7 +272,6 @@ export default function LoginScreen() {
   };
 
   const textColor = theme === "dark" ? "#fff" : "#000";
-
   // Add this useFocusEffect hook to refresh profile data when returning to this screen
   useFocusEffect(
     useCallback(() => {
