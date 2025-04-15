@@ -14,6 +14,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useColorScheme } from "react-native";
 import { auth, db } from "../../constants/firebaseConfig";
+
 import {
   collection,
   query,
@@ -88,6 +89,9 @@ export default function VideoScreen() {
   }, []);
 
   useEffect(() => {
+    // Get current user ID
+    const currentUserId = auth.currentUser?.uid;
+    
     let q;
     if (selectedTags.length > 0) {
       q = query(
@@ -110,6 +114,8 @@ export default function VideoScreen() {
           id: doc.id,
           ...doc.data(),
         }))
+        // Filter out the current user if they are a professional
+        .filter(user => user.id !== currentUserId)
         .sort((a, b) => {
           if (a.isActive === b.isActive) {
             return (a.firstName || "").localeCompare(b.firstName || "");
@@ -389,8 +395,6 @@ export default function VideoScreen() {
       {(activeTab === "book") && (
         <>
 
-
-
 {/* Basic Categories */}
 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 15, paddingHorizontal: 15 }}>
             {categories.map((category) => {
@@ -467,7 +471,6 @@ export default function VideoScreen() {
           {selectedTags.length > 0 && (
             <TouchableOpacity
               onPress={() => setSelectedTags([])}
-              
               style={{
                 backgroundColor: "#D32F2F",
                 padding: 10,
@@ -542,8 +545,9 @@ export default function VideoScreen() {
             })
             .catch(err => console.error(err));
         }}
-        
-        
+        onLongPress={() =>
+          router.push({ pathname: "/pages/ViewProfileScreen", params: { userId: item.id } })
+        }
       >
         <Image
           source={{
@@ -563,9 +567,6 @@ export default function VideoScreen() {
     )}
   />
 </View>
-
-
-
 
           {/* Date/Time Picker */}
           {selectedProfessional && (
@@ -650,8 +651,6 @@ export default function VideoScreen() {
 </ScrollView>
   );
 }
-
-
 
 const styles = StyleSheet.create({
   container: {

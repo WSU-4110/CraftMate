@@ -1,34 +1,10 @@
 import { StyleSheet } from "react-native";
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 20,
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: "bold",
-        marginBottom: 20,
-    },
-    input: {
-        width: "100%",
-        padding: 10,
-        borderWidth: 1,
-        borderColor: "#ccc",
-        borderRadius: 5,
-        marginBottom: 10,
-    },
-    button: {
-      padding: 10,
-      backgroundColor: "#E89600",
-      borderRadius: 5,
-      alignItems: "center",
-      justifyContent: "center",
-      minWidth: 100, // Ensures a consistent button width
-      maxWidth: 200, // Prevents excessive stretching
-      flexShrink: 1, // Prevents expansion due to growing text
+  container: {
+    flexGrow: 1,
+    padding: 20,
+    paddingTop: 0,
   },
     buttonText: {
         color: "white",
@@ -59,25 +35,183 @@ const styles = StyleSheet.create({
       alignItems: "center",
       backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
-  modalContent: {
-      width: "80%",
-      padding: 20,
-      backgroundColor: "#fff",
-      borderRadius: 10,
-      alignItems: "center",
+  input: {
+    height: 50,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 20,
+    paddingHorizontal: 10,
+    fontSize: 16,
   },
-  modalTitle: {
-      fontSize: 18,
-      fontWeight: "bold",
-      marginBottom: 10,
+  button: {
+    backgroundColor: "#E89600", // CraftMate's orange
+    borderRadius: 8,
+    paddingVertical: 15,
+    alignItems: "center",
   },
-  cancelButton: {
-      marginTop: 10,
-      backgroundColor: "#E89600",
-      padding: 10,
-      borderRadius: 5,
+  buttonText: {
+    fontWeight: "bold",
+    fontSize: 16,
   },
-  
+  footer: {
+    marginTop: 20,
+    alignItems: "center",
+  },
+  // New styles from provided code
+  mediaPreviewContainer: {
+    flexDirection: "row",
+    marginBottom: 20,
+  },
+  mediaPreviewWrapper: {
+    position: "relative",
+    marginRight: 10,
+  },
+  mediaPreview: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+  },
+  removeMediaButton: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 12,
+    padding: 2,
+  },
+  imageButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  imageButtonText: {
+    marginLeft: 10,
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  submitButton: {
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+    backgroundColor: "#E89600", // Added CraftMate's orange to match existing theme
+  },
+  submitButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#fff",
+  },
+  headerContainer: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 16,
+    marginTop: 40, // Added top margin to prevent clipping
+    textAlign: "center",
+    flexDirection: 'row',
+    alignItems: "center",
+    justifyContent: "center", // Center the username text
+    position: "relative", // Ensure proper positioning for the back button
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginTop: 20, // Move the header text down
+  },
+  topPadding: {
+    paddingTop: 8,
+  },
+  addTagsButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginBottom: 20,
+    alignSelf: "flex-start",
+    backgroundColor: "#E89600", // Added CraftMate's orange
+  },
+  addTagsButtonText: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#000",
+    marginRight: 8,
+  },
+  tagMenu: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 20,
+    backgroundColor: "#f9f9f9",
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  tagButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    marginRight: 8,
+    marginBottom: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tagText: {
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  selectedTagButton: {
+    backgroundColor: "#E89600",
+  },
+  customTagButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    marginTop: 10,
+    alignSelf: "flex-start",
+    backgroundColor: "#E89600", // Added CraftMate's orange
+  },
+  customTagButtonText: {
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  radioText: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  characterCountContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginTop: -15,
+  },
+  characterCount: {
+    fontSize: 12,
+    textAlign: 'right',
+  },
+  characterWarning: {
+    fontSize: 12,
+    color: 'red',
+    marginLeft: 8,
+  },
+  footerLink: {
+    color: "#E89600", // Match CraftMate's orange
+    fontWeight: "bold",
+  },
+  text: {
+    fontSize: 16,
+  },
+  editButton: {
+    marginTop: 20,
+    padding: 6,
+    backgroundColor: "#E89600", // CraftMate's orange
+    borderRadius: 8,
+    alignItems: "center",
+  },
 });
 
 export default styles;
