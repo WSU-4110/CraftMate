@@ -260,6 +260,11 @@ export default function ChatListScreen() {
     setShowMessages(false);
     setSelectedUser(null);
   };
+  
+  // New function to navigate to user profile
+  const navigateToUserProfile = (userId: string) => {
+    router.push(`../pages/ViewProfileScreen?userId=${userId}`);
+  };
 
   if (!isLoggedIn) {
     // If no user is logged in, show a message or render nothing
@@ -309,9 +314,11 @@ export default function ChatListScreen() {
                   source={{ uri: selectedUser.profileImage }}
                   style={styles.headerProfileImage}
                 />
-                <Text style={[styles.username, { color: Colors[theme].text }]}>
-                  {selectedUser.username}
-                </Text>
+                <TouchableOpacity onPress={() => navigateToUserProfile(selectedUser.uid)}>
+                  <Text style={[styles.username, { color: Colors[theme].text }]}>
+                    {selectedUser.username}
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
           </View>

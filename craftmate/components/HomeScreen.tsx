@@ -199,6 +199,10 @@ const HomeScreen = () => {
     router.push(`../pages/viewpost?postId=${postId}`);
   };
 
+  const navigateToUserProfile = (userId: string) => {
+    router.push(`../pages/ViewProfileScreen?userId=${userId}`);
+  };
+
   const filteredPosts = searchQuery
     ? posts.filter((post) =>
         (post.postTitle?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -261,9 +265,11 @@ const HomeScreen = () => {
                 }
                 style={styles.profileImage}
               />
-              <Text style={[styles.postUsername, { color: Colors[theme].text }]}>
-                {item.username}
-              </Text>
+              <TouchableOpacity onPress={() => navigateToUserProfile(item.userId)}>
+                <Text style={[styles.postUsername, { color: Colors[theme].text }]}>
+                  {item.username}
+                </Text>
+              </TouchableOpacity>
             </View>
             <Text style={[styles.postTimestamp, { color: Colors[theme].text }]}>
               {postDate.toLocaleDateString()}
