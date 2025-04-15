@@ -48,6 +48,9 @@ export default function VideoScreen() {
 
 
   useEffect(() => {
+    // Get current user ID
+    const currentUserId = auth.currentUser?.uid;
+    
     const q = query(collection(db, "users"), where("isProfessional", "==", true));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const professionalUsers = querySnapshot.docs
@@ -55,6 +58,8 @@ export default function VideoScreen() {
           id: doc.id,
           ...doc.data(),
         }))
+        // Filter out the current user if they are a professional
+        .filter(user => user.id !== currentUserId)
         .sort((a, b) => {
           if (a.isActive === b.isActive) {
             return (a.firstName || "").localeCompare(b.firstName || "");

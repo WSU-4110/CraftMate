@@ -199,6 +199,25 @@ const HomeScreen = () => {
     router.push(`../pages/viewpost?postId=${postId}`);
   };
 
+  const navigateToUserProfile = (userId: string) => {
+    const currentUser = auth.currentUser;
+    
+    // Check if user is logged in
+    if (!currentUser) {
+      // If not logged in, redirect to login screen
+      router.push('/login');
+      return;
+    }
+    
+    // If it's the current user, go to their profile
+    if (userId === currentUser.uid) {
+      router.push('/login');
+    } else {
+      // If it's another user, go to view their profile
+      router.push(`../pages/ViewProfileScreen?userId=${userId}`);
+    }
+  };
+
   const filteredPosts = searchQuery
     ? posts.filter((post) =>
         (post.postTitle?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -261,9 +280,11 @@ const HomeScreen = () => {
                 }
                 style={styles.profileImage}
               />
-              <Text style={[styles.postUsername, { color: Colors[theme].text }]}>
-                {item.username}
-              </Text>
+              <TouchableOpacity onPress={() => navigateToUserProfile(item.userId)}>
+                <Text style={[styles.postUsername, { color: Colors[theme].text }]}>
+                  {item.username}
+                </Text>
+              </TouchableOpacity>
             </View>
             <Text style={[styles.postTimestamp, { color: Colors[theme].text }]}>
               {postDate.toLocaleDateString()}
@@ -287,6 +308,7 @@ const HomeScreen = () => {
                   backgroundColor: item.likedBy?.includes(user?.uid)
                     ? '#E89600' // Highlighted color for liked state
                     : Colors[theme].tint, // Default color
+                  marginLeft: 0,
                 },
               ]}
               onPress={() => handleLikePost(item.id)}

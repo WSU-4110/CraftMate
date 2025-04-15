@@ -5,6 +5,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     alignItems: 'center',
+    paddingBottom: 0,
   },
   headerContainer: {
     flexDirection: 'row',
@@ -116,7 +117,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    marginLeft: 0, // Changed from 10 to 0 to align the oval to the left
+    marginLeft: 10, // Changed from 10 to 0 to align the oval to the left
   },
   ovalText: {
     marginLeft: 5,
