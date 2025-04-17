@@ -12,6 +12,8 @@ import {
   FlatList, // Add FlatList import
   Dimensions, // Add Dimensions import
 } from "react-native";
+
+import { validateReplyInput } from '../utils/replyValidation';
 import { Ionicons } from "@expo/vector-icons";
 import { useColorScheme } from "react-native";
 import { Colors } from "../constants/Colors";
@@ -235,24 +237,20 @@ export default function ViewPostScreen() {
   };
 
   const handleAddReply = async (replyText: string) => {
-    if (!replyText.trim()) {
-      Alert.alert("Cannot send", "Your reply cannot be empty.");
+    const validation = validateReplyInput(replyText, currentUser);
+    if (validation.error) {
+      Alert.alert("Cannot send", validation.error);
       return;
     }
   
     try {
       const repliesRef = collection(db, 'posts', safePostId as string, 'replies');
-      if (!currentUser?.uid) {
-  Alert.alert("Error", "User not found. Please log in again.");
-  return;
-}
-
-await addDoc(repliesRef, {
-  content: replyText,
-  authorId: currentUser.uid,
-  timestamp: serverTimestamp(),
-});
-
+  
+      await addDoc(repliesRef, {
+        content: replyText,
+        authorId: currentUser!.uid,
+        timestamp: serverTimestamp(),
+      });
   
       // Increment the comment count on the post
       const postRef = doc(db, "posts", safePostId as string);
