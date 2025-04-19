@@ -15,7 +15,10 @@
     "build": "expo prebuild",
     "build:android": "eas build -p android",
     "build:ios": "eas build -p ios",
-    "build:web": "EXPO_NO_TESTS=1 NODE_ENV=production expo export"
+    "build:web": "EXPO_NO_TESTS=1 NODE_ENV=production expo export",
+    "test:clear": "jest --clearCache",
+    "test:update": "jest --updateSnapshot",
+    "test:coverage:watch": "jest --coverage --watchAll"
   },
   "jest": {
     "preset": "jest-expo"
