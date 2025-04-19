@@ -1,5 +1,7 @@
 # CraftMate
 
+![CI Status](https://github.com/WSU-4110/CraftMate/actions/workflows/ci.yml/badge.svg)
+
 CraftMate is a DIY assistance platform that connects enthusiasts with experts for real-time guidance. Whether you're into woodworking, electronics, arts & crafts, or home improvement, CraftMate provides expert advice through live chat and video call support, ensuring you get the help you need to complete your projects with confidence.
 
 In addition to expert consultations, CraftMate features a community-driven home feed where users can view inquiries, share progress, showcase completed projects, and exchange ideas with fellow DIYers. CraftMate fosters an engaging environment for enthusiasts of all skill levels.

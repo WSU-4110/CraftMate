@@ -1,4 +1,4 @@
-name: CI
+name: Node.js CI
 
 on:
   push:
@@ -7,8 +7,12 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-test:
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.x, 18.x]
+
     defaults:
       run:
         working-directory: ./craftmate
@@ -16,41 +20,54 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
-    - name: Set up Node.js
+    - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v3
       with:
-        node-version: '16.x'
+        node-version: ${{ matrix.node-version }}
         cache: 'npm'
         cache-dependency-path: './craftmate/package-lock.json'
     
     - name: Install dependencies
-      run: npm install
-    
-    - name: Install Expo CLI
-      run: npm install -g expo-cli eas-cli
-    
-    - name: Build project
-      run: |
-        npm run build
-        npm run build:web
+      run: npm ci
     
     - name: Run tests with coverage
       run: npm run test:ci
     
-    - name: Upload coverage reports
+    - name: Upload coverage
       uses: actions/upload-artifact@v3
       with:
         name: coverage-report
         path: craftmate/coverage/
-        
-    - name: Upload build artifact
-      uses: actions/upload-artifact@v3
+
+  build-and-deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    defaults:
+      run:
+        working-directory: ./craftmate
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
       with:
-        name: web-build
-        path: craftmate/dist/
+        node-version: '18.x'
+        cache: 'npm'
+        cache-dependency-path: './craftmate/package-lock.json'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Install Expo CLI
+      run: npm install -g expo-cli eas-cli
+    
+    - name: Build web
+      run: npm run build:web
     
     - name: Deploy to GitHub Pages
-      if: github.ref == 'refs/heads/main'
       uses: JamesIves/github-pages-deploy-action@v4
       with:
         folder: craftmate/dist
