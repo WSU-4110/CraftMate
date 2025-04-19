@@ -26,6 +26,14 @@ jobs:
     - name: Install dependencies
       run: npm install
     
+    - name: Install Expo CLI
+      run: npm install -g expo-cli eas-cli
+    
+    - name: Build project
+      run: |
+        npm run build
+        npm run build:web
+    
     - name: Run tests with coverage
       run: npm run test:ci
     
@@ -35,7 +43,15 @@ jobs:
         name: coverage-report
         path: craftmate/coverage/
         
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v3
       with:
-        files: ./craftmate/coverage/lcov.info
+        name: web-build
+        path: craftmate/dist/
+    
+    - name: Deploy to GitHub Pages
+      if: github.ref == 'refs/heads/main'
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        folder: craftmate/dist
+        branch: gh-pages

@@ -3,8 +3,13 @@ module.exports = {
   setupFiles: [
     '<rootDir>/jest.setup.js'
   ],
+  moduleNameMapper: {
+    '^console$': '<rootDir>/craftmate/node_modules/console-browserify/index.js',
+    '^util$': '<rootDir>/craftmate/node_modules/util/util.js',
+    '^path$': '<rootDir>/craftmate/node_modules/path-browserify/index.js'
+  },
   transformIgnorePatterns: [
-    'node_modules/(?!(jest-)?@?react-native|@react-native-community|@react-navigation|expo-router|expo|firebase)'
+    'node_modules/(?!(jest-)?@?react-native|@react-native-community|@react-navigation|expo-router|expo|firebase|console-browserify)'
   ],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   testEnvironment: 'node',
