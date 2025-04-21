@@ -2,7 +2,7 @@ name: React Native CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, Warif_unittest]
   pull_request:
     branches: [ main, master ]
 
@@ -31,9 +31,3 @@ jobs:
     - name: Run linting
       run: npm run lint || true
       working-directory: ./craftmate
-      
-    - name: Upload test coverage
-      uses: actions/upload-artifact@v3
-      with:
-        name: coverage-report
-        path: ./craftmate/coverage/
