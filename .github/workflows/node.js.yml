@@ -2,7 +2,7 @@ name: React Native CI
 
 on:
   push:
-    branches: [ main, master, Warif_unittest]
+    branches: [ main, master]
   pull_request:
     branches: [ main, master ]
 
